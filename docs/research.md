@@ -12,11 +12,11 @@
 - "restitution" of ball-ball, ball-rail 
 
 # Physical characteristics
-- Mass of ball = (0.15kg)[https://hypertextbook.com/facts/2004/OluwoleOwoseni.shtml]
+- Mass of ball = [0.15kg](https://hypertextbook.com/facts/2004/OluwoleOwoseni.shtml)
 - Mass of cue stick ~ (19oz = 0.538641kg)
 - Friction coefficient
 - Cushion
 
 # Sources
 - https://www.real-world-physics-problems.com/physics-of-billiards.html
-- (physical properties)[https://billiards.colostate.edu/threads/physics.html]
+- [physical properties](https://billiards.colostate.edu/threads/physics.html)
