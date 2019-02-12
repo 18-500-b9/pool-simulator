@@ -2,9 +2,9 @@ import numpy as np
 
 
 class Vector():
-    '''
+    """
     2-D vector with x and y components.
-    '''
+    """
 
     def __init__(self, x: float, y: float):
         self.x = float(x)
@@ -13,9 +13,9 @@ class Vector():
         self.ang = Vector.get_angle(x, y)
 
     def set(self, x, y):
-        '''
+        """
         Set the x and y components for this vector.
-        '''
+        """
         self.x = x
         self.y = y
         self.mag = Vector.get_magnitude(x, y)
@@ -23,17 +23,17 @@ class Vector():
 
     @staticmethod
     def get_magnitude(x, y):
-        '''
+        """
         Get the magnitude, given x and y components.
-        '''
+        """
 
         return np.sqrt(x**2 + y**2)
 
     @staticmethod
     def get_angle(x, y):
-        '''
+        """
         Given x and y, compute the angle (degrees), north of the x-axis.
-        '''
+        """
 
         # On the x or y axis
         if x == y == 0:

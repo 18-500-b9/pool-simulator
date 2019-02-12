@@ -1,7 +1,7 @@
 class Coordinates():
-    '''
+    """
     Cartesian coordinates.
-    '''
+    """
 
     def __init__(self, x: float, y: float):
         self.x = float(x)
