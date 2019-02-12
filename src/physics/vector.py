@@ -1,28 +1,14 @@
 import numpy as np
 
 
-class Point():
-
-    '''
-    Cartesian coordinates.
-    '''
-
-    def __init__(self, x: 'float', y: 'float'):
-        self.x = x
-        self.y = y
-
-    def __str__(self):
-        return "({}, {})".format(self.x, self.y)
-
-
 class Vector():
     '''
     2-D vector with x and y components.
     '''
 
-    def __init__(self, x: 'float', y: 'float'):
-        self.x = x
-        self.y = y
+    def __init__(self, x: float, y: float):
+        self.x = float(x)
+        self.y = float(y)
         self.mag = Vector.get_magnitude(x, y)
         self.ang = Vector.get_angle(x, y)
 
@@ -50,16 +36,18 @@ class Vector():
         '''
 
         # On the x or y axis
-        if x == 0:
+        if x == y == 0:
+            return None
+        elif x == 0:
             if y > 0:
-                return 90
+                return 90.0
             elif y < 0:
-                return 270
+                return 270.0
         elif y == 0:
             if x > 0:
-                return 0
+                return 0.0
             else:
-                return 180
+                return 180.0
 
         # Compute raw angle (between -90 and 90)
         raw_angle = np.degrees(np.arctan(y/x))
@@ -67,11 +55,17 @@ class Vector():
         if x > 0 and y > 0:  # Quadrant 1
             return raw_angle
         elif x < 0 and y > 0:  # Quadrant 2
-            return 180 + raw_angle
+            return 180.0 + raw_angle
         elif x < 0 and y < 0:  # Quadrant 3
-            return 180 + raw_angle
+            return 180.0 + raw_angle
         else:  # Quadrant 4
-            return (360 + raw_angle) % 360
+            return (360.0 + raw_angle) % 360.0
 
     def __str__(self):
         return "Magnitude = {}, Angle = {}".format(self.mag, self.ang)
+
+    def __eq__(self, other):
+        return self.x == other.x and self.y == other.y
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
