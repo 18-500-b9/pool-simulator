@@ -1,4 +1,5 @@
-import numpy as np
+import physics.utility as util
+from physics.coordinates import Coordinates
 
 
 class Vector():
@@ -9,60 +10,70 @@ class Vector():
     def __init__(self, x: float, y: float):
         self.x = float(x)
         self.y = float(y)
-        self.mag = Vector.get_magnitude(x, y)
-        self.ang = Vector.get_angle(x, y)
 
-    def set(self, x, y):
+    def get_magnitude(self):
         """
-        Set the x and y components for this vector.
-        """
-        self.x = x
-        self.y = y
-        self.mag = Vector.get_magnitude(x, y)
-        self.ang = Vector.get_angle(x, y)
-
-    @staticmethod
-    def get_magnitude(x, y):
-        """
-        Get the magnitude, given x and y components.
+        Get the magnitude for this vector.
         """
 
-        return np.sqrt(x**2 + y**2)
+        return util.get_distance(Coordinates(self.x, self.y))
 
-    @staticmethod
-    def get_angle(x, y):
+    def get_angle(self):
         """
-        Given x and y, compute the angle (degrees), north of the x-axis.
+        Get the angle for this vector.
         """
 
-        # On the x or y axis
-        if x == y == 0:
-            return None
-        elif x == 0:
-            if y > 0:
-                return 90.0
-            elif y < 0:
-                return 270.0
-        elif y == 0:
-            if x > 0:
-                return 0.0
-            else:
-                return 180.0
+        return util.get_angle(Coordinates(self.x, self.y))
 
-        # Compute raw angle (between -90 and 90)
-        raw_angle = np.degrees(np.arctan(y/x))
+    def dot_product(self, other):
+        """
+        Dot product dot product of this vector * other vector.
+        :return: scalar dot product
+        """
+        return self.x * other.x + self.y * other.y
 
-        if x > 0 and y > 0:  # Quadrant 1
-            return raw_angle
-        elif x < 0 and y > 0:  # Quadrant 2
-            return 180.0 + raw_angle
-        elif x < 0 and y < 0:  # Quadrant 3
-            return 180.0 + raw_angle
-        else:  # Quadrant 4
-            return (360.0 + raw_angle) % 360.0
+    def __add__(self, other):
+        """
+        Add another vector to this vector.
+
+        :param other:
+        :return: new vector representing sum
+        """
+
+        return Vector(self.x + other.x, self.y + other.y)
+
+    def __sub__(self, other):
+        """
+        Subtract another vector from this vector.
+
+        :param other:
+        :return: new vector representing difference
+        """
+
+        return Vector(self.x - other.x, self.y - other.y)
+
+    def __mul__(self, scalar: float):
+        """
+        Multiply this vector by a scalar.
+
+        :param scalar: value to scale vector by
+        :return: new, scaled vector
+        """
+
+        return Vector(self.x*scalar, self.y*scalar)
+
+    def __rmul__(self, scalar: float):
+        """
+        Multiply this vector by a scalar.
+
+        :param scalar: value to scale vector by
+        :return: new, scaled vector
+        """
+
+        return Vector(self.x*scalar, self.y*scalar)
 
     def __str__(self):
-        return "Magnitude = {}, Angle = {}".format(self.mag, self.ang)
+        return "Vector ({}, {})".format(self.x, self.y)
 
     def __eq__(self, other):
         return self.x == other.x and self.y == other.y
