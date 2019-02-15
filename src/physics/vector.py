@@ -1,8 +1,9 @@
 import physics.utility as util
 from physics.coordinates import Coordinates
+from physics.direction import Direction
 
 
-class Vector():
+class Vector:
     """
     2-D vector with x and y components.
     """
@@ -10,6 +11,23 @@ class Vector():
     def __init__(self, x: float, y: float):
         self.x = float(x)
         self.y = float(y)
+
+    @staticmethod
+    def get_normal_vector(direction: Direction):
+        """
+        Returns the normal vector pointing towards the given direction.
+
+        :param direction: Compass direction of the normal vector.
+        :return: Normal vector
+        """
+        if direction == Direction.NORTH:
+            return Vector(0, 1)
+        elif direction == Direction.EAST:
+            return Vector(1, 0)
+        elif direction == Direction.SOUTH:
+            return Vector(0, -1)
+        else:  # Direction.WEST
+            return Vector(-1, 0)
 
     def get_magnitude(self):
         """
@@ -52,15 +70,18 @@ class Vector():
 
         return Vector(self.x - other.x, self.y - other.y)
 
-    def __mul__(self, scalar: float):
+    def __mul__(self, other: 'Vector' or float or int):
         """
-        Multiply this vector by a scalar.
+        Multiply this vector by another vector OR a scalar.
 
-        :param scalar: value to scale vector by
-        :return: new, scaled vector
+        :param other: either another vector OR a scalar
+        :return: dot product OR scaled vector
         """
 
-        return Vector(self.x*scalar, self.y*scalar)
+        if type(other) == type(self):
+            return self.dot_product(other)
+        elif type(other) == int or type(other) == float:
+            return Vector(self.x * other, self.y * other)
 
     def __rmul__(self, scalar: float):
         """
@@ -70,7 +91,7 @@ class Vector():
         :return: new, scaled vector
         """
 
-        return Vector(self.x*scalar, self.y*scalar)
+        return Vector(self.x * scalar, self.y * scalar)
 
     def __str__(self):
         return "Vector ({}, {})".format(self.x, self.y)

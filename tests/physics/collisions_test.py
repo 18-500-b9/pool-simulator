@@ -3,25 +3,32 @@ import unittest
 
 sys.path.append('../../src')
 
+import numpy as np
 from physics.coordinates import Coordinates
 from physics.vector import Vector
 from physics.collisions import check_ball_ball_collision
 from physics.collisions import check_ball_wall_collision
 from physics.collisions import resolve_ball_ball_collision
 
+FLOAT_PLACES = 7  # Rounding error for floating point equality
+
 
 class CoordinatesTest(unittest.TestCase):
 
-    def assertVectorAlmostEqual(self, v_a: Vector, v_b: Vector):
+    def assertVectorAlmostEqual(self, v_result: Vector, v_expected: Vector):
         """
         Custom test method to test if 2 vectors are almost equal.
 
-        :param v_a: first vector to compare
-        :param v_b: second vector to compare
+        :param v_result: second vector to compare
+        :param v_expected: first vector to compare
         :raises: AssertionError if not almost equal
         """
-        self.assertAlmostEqual(v_a.x, v_b.x, places=14)
-        self.assertAlmostEqual(v_a.y, v_b.y, places=14)
+        self.assertAlmostEqual(v_result.x, v_expected.x,
+                               msg='X-component: Result = {}, Expected = {}'.format(v_expected.x, v_result.x),
+                               places=FLOAT_PLACES)
+        self.assertAlmostEqual(v_result.y, v_expected.y,
+                               msg='Y-component: Result = {}, Expected = {}'.format(v_expected.y, v_result.y),
+                               places=FLOAT_PLACES)
 
     """
     Testing check_ball_ball_collision()
@@ -125,7 +132,7 @@ class CoordinatesTest(unittest.TestCase):
     Testing check_ball_wall_collision() with equal masses
     """
 
-    def test_resolve_ball_ball_collision_1d(self):
+    def test_resolve_ball_ball_collision_1d_axes(self):
         # 1-D, stationary target ball
         a_pos, a_vel, a_mass = Coordinates(-1.0, 0.0), Vector(2.0, 0.0), 3.0
         b_pos, b_vel, b_mass = Coordinates(0.0, 0.0), Vector(0.0, 0.0), 3.0
@@ -162,7 +169,7 @@ class CoordinatesTest(unittest.TestCase):
         self.assertVectorAlmostEqual(result[0], a_vel_new)
         self.assertVectorAlmostEqual(result[1], b_vel_new)
 
-    def test_resolve_ball_ball_collision_2d_basic(self):
+    def test_resolve_ball_ball_collision_1d_diagonal(self):
         # 2-D, stationary target ball
         a_pos, a_vel, a_mass = Coordinates(-1.0, -1.0), Vector(2.0, 2.0), 3.0
         b_pos, b_vel, b_mass = Coordinates(0.0, 0.0), Vector(0.0, 0.0), 3.0
@@ -187,14 +194,49 @@ class CoordinatesTest(unittest.TestCase):
         self.assertVectorAlmostEqual(result[0], a_vel_new)
         self.assertVectorAlmostEqual(result[1], b_vel_new)
 
-    def test_resolve_ball_ball_collision_2d_complex(self):
-        # 2-D, stationary target ball
-        a_pos, a_vel, a_mass = Coordinates(-1.0, 0.0), Vector(1.0, 1.0), 3.0
+    def test_resolve_ball_ball_collision_2d_one_moving(self):
+        # A enters from NW (135 degrees), contacts B on its left (180 degrees)
+        # B is stationary, located at origin
+        # A should exit S (270 degrees)
+        # B should exit E (0 degrees)
+        a_pos, a_vel, a_mass = Coordinates(-1.0, 0.0), Vector(1.0, -1.0), 3.0
         b_pos, b_vel, b_mass = Coordinates(0.0, 0.0), Vector(0.0, 0.0), 3.0
 
         result = resolve_ball_ball_collision(a_pos, a_vel, a_mass, b_pos, b_vel, b_mass)
 
-        a_vel_new = Vector(0.0, 1.0)
+        a_vel_new = Vector(0.0, -1.0)
+        b_vel_new = Vector(1.0, 0.0)
+
+        self.assertVectorAlmostEqual(result[0], a_vel_new)
+        self.assertVectorAlmostEqual(result[1], b_vel_new)
+
+        # A enters from 122.3 degrees, contacts B on its left (180 degrees)
+        # B is stationary, located at origin
+        # A should exit S (270 degrees), with y-component of initial magnitude
+        # B should exit E (0 degrees), with x-component of initial magnitude
+        mag = 7.14
+        ang = 32.3
+        a_pos, a_vel, a_mass = Coordinates(-1.0, 0.0), Vector(mag * np.cos(ang), -mag * np.sin(ang)), 3.0
+        b_pos, b_vel, b_mass = Coordinates(0.0, 0.0), Vector(0.0, 0.0), 3.0
+
+        result = resolve_ball_ball_collision(a_pos, a_vel, a_mass, b_pos, b_vel, b_mass)
+
+        a_vel_new = Vector(0.0, -mag * np.sin(ang))
+        b_vel_new = Vector(mag * np.cos(ang), 0.0)
+
+        self.assertVectorAlmostEqual(result[0], a_vel_new)
+        self.assertVectorAlmostEqual(result[1], b_vel_new)
+
+    def test_resolve_ball_ball_collision_2d_two_moving(self):
+        # A enters from W (270 degrees), contacts B on its left (180 degrees)
+        # A enters from E (0 degrees), contacts A on its right (0 degrees)
+        # A and B should both reverse their direction
+        a_pos, a_vel, a_mass = Coordinates(-0.5, 0.0), Vector(1.0, 0.0), 3.0
+        b_pos, b_vel, b_mass = Coordinates(0.5, 0.0), Vector(-1.0, 0.0), 3.0
+
+        result = resolve_ball_ball_collision(a_pos, a_vel, a_mass, b_pos, b_vel, b_mass)
+
+        a_vel_new = Vector(-1.0, 0.0)
         b_vel_new = Vector(1.0, 0.0)
 
         self.assertVectorAlmostEqual(result[0], a_vel_new)
