@@ -1,7 +1,7 @@
 import numpy as np
 
-from physics.coordinates import Coordinates
-from physics.vector import Vector
+from physics.collisions import *
+from pool.ball_type import BallType
 
 
 class PoolBall():
@@ -13,12 +13,11 @@ class PoolBall():
     # DIAMETER = 0.05715  # m
 
     def __init__(self,
-                 name: str,
+                 name: BallType,
                  pos: Coordinates,
                  mass: float,
                  radius: float,
                  vel=Vector(0, 0)):
-
         self.name = name
         self.pos = pos
         self.mass = mass
@@ -37,13 +36,6 @@ class PoolBall():
         self.vel.x += acc_x
         self.vel.y += acc_y
 
-    def get_momentum(self):
-        """
-        Returns this ball's current momentum as a Vector.
-        """
-
-        return Vector(self.mass*self.vel.x, self.mass*self.vel.y)
-
     @staticmethod
     def get_theta(ball_a, ball_b):
         """
@@ -54,7 +46,7 @@ class PoolBall():
         x = ball_b.x - ball_a.x
         y = ball_b.y - ball_a.y
 
-        return np.arctan(y/x)
+        return np.arctan(y / x)
 
     @staticmethod
     def distance(a: Coordinates, b: Coordinates):
@@ -62,26 +54,7 @@ class PoolBall():
         Return the distance between these two points.
         """
 
-        return np.sqrt((b.x-a.x)**2 + (b.y-a.y)**2)
-
-    def check_collision_with(self, other):
-        """
-        Check if this ball is colliding with another ball.
-        """
-
-        # First get distance between the two balls
-        distance = PoolBall.distance(self.pos, other.pos)
-
-        is_colliding = distance <= (self.radius + other.radius)
-
-        return is_colliding
-
-    def collide_with(self, other):
-        """
-        Collide with other ball.
-        TODO: Currently assuming elastic collision.
-        """
-        # Momentum (p)
+        return np.sqrt((b.x - a.x) ** 2 + (b.y - a.y) ** 2)
 
     def time_step(self):
         """
@@ -93,5 +66,4 @@ class PoolBall():
         self.pos.y += self.vel.y
 
     def __str__(self):
-        return "PoolBall {} at ({},{})".format(self.name,
-                                               self.x_pos, self.y_pos)
+        return "PoolBall {} at ({},{})".format(self.name, self.pos.x, self.pos.y)
