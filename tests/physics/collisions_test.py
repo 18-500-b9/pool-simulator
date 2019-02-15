@@ -129,7 +129,7 @@ class CoordinatesTest(unittest.TestCase):
         self.assertTrue(result_sw)
 
     """
-    Testing check_ball_wall_collision() with equal masses
+    Testing resolve_ball_ball_collision() with equal masses
     """
 
     def test_resolve_ball_ball_collision_1d_axes(self):
@@ -242,6 +242,25 @@ class CoordinatesTest(unittest.TestCase):
         self.assertVectorAlmostEqual(result[0], a_vel_new)
         self.assertVectorAlmostEqual(result[1], b_vel_new)
 
+        # A enters from W (270 degrees), contacts B on its left (180 degrees)
+        # A enters from E (0 degrees), contacts A on its right (0 degrees)
+        # A and B should both reverse their direction
+        a_pos, a_vel, a_mass = Coordinates(-0.5, 0.0), Vector(1.0, 0.0), 3.0
+        b_pos, b_vel, b_mass = Coordinates(0.5, 0.0), Vector(-1.0, 0.0), 3.0
+
+        result = resolve_ball_ball_collision(a_pos, a_vel, a_mass, b_pos, b_vel, b_mass)
+
+        a_vel_new = Vector(-1.0, 0.0)
+        b_vel_new = Vector(1.0, 0.0)
+
+        self.assertVectorAlmostEqual(result[0], a_vel_new)
+        self.assertVectorAlmostEqual(result[1], b_vel_new)
+
+        """
+        Testing resolve_ball_wall_collision() 
+        """
+
+        # TODO
 
 if __name__ == '__main__':
     unittest.main()
