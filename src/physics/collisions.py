@@ -1,6 +1,7 @@
 from physics.coordinates import Coordinates
-from physics.utility import get_distance, get_angle
+from physics.utility import get_distance
 from physics.vector import Vector
+from physics.direction import Direction
 
 
 def check_ball_ball_collision(a_center: Coordinates, a_radius: float,
@@ -34,16 +35,13 @@ def resolve_ball_ball_collision(a_pos: Coordinates, a_vel: Vector, a_mass: float
 
     # Taken from https://en.wikipedia.org/wiki/Elastic_collision#Two-dimensional_collision_with_two_moving_objects
 
-    a_vel_new = a_vel - (2*b_mass)/(a_mass+b_mass) * ((a_vel-b_vel).dot_product(a_pos-b_pos))/get_distance(a_pos-b_pos)**2 * (a_pos-b_pos)
-    b_vel_new = b_vel - (2*a_mass)/(a_mass+b_mass) * ((b_vel-a_vel).dot_product(b_pos-a_pos))/get_distance(b_pos-a_pos)**2 * (b_pos-a_pos)
-
-    # a_vel_new = Vector((a_vel.x * (a_mass - b_mass) + (2 * b_mass * b_vel.x)) / (a_mass + b_mass),
-    #                    (a_vel.y * (a_mass - b_mass) + (2 * b_mass * b_vel.y)) / (a_mass + b_mass))
-    # b_vel_new = Vector((b_vel.x * (b_mass - a_mass) + (2 * a_mass * a_vel.x)) / (a_mass + b_mass),
-    #                    (b_vel.y * (b_mass - a_mass) + (2 * a_mass * a_vel.y)) / (a_mass + b_mass))
-
+    a_vel_new = a_vel - (2 * b_mass) / (a_mass + b_mass) * ((a_vel - b_vel).dot_product(a_pos - b_pos)) / get_distance(
+        a_pos - b_pos) ** 2 * (a_pos - b_pos)
+    b_vel_new = b_vel - (2 * a_mass) / (a_mass + b_mass) * ((b_vel - a_vel).dot_product(b_pos - a_pos)) / get_distance(
+        b_pos - a_pos) ** 2 * (b_pos - a_pos)
 
     return a_vel_new, b_vel_new
+
 
 def check_ball_wall_collision(ball_center: Coordinates, ball_radius: float,
                               north: float, east: float, south: float, west: float) -> bool:
@@ -63,3 +61,18 @@ def check_ball_wall_collision(ball_center: Coordinates, ball_radius: float,
             ball_center.x + ball_radius >= east or
             ball_center.y - ball_radius <= south or
             ball_center.x - ball_radius <= west)
+
+def resolve_ball_wall_collision(ball_vel: Vector, wall: Direction):
+    """
+    Returns the new velocity for this ball that has collided with a wall.
+    *Assumes wall is in one of 4 directions: N, E, S, or W*
+
+    :param ball_vel: entry ball velocity
+    :param wall: which wall (N, E, S, W)
+    :return: exit ball velocity
+    """
+
+    if wall == Direction.NORTH or wall == Direction.SOUTH:
+        return Vector(ball_vel.x, -ball_vel.y)  # Reverse y-direction
+    else: # EAST or WEST
+        return Vector(-ball_vel.x, ball_vel.y)  # Reverse x-direction
