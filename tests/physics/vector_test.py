@@ -17,8 +17,8 @@ class VectorTest(unittest.TestCase):
         # Type check
         self.assertIsInstance(v.x, float)
         self.assertIsInstance(v.y, float)
-        self.assertIsInstance(v.mag, float)
-        self.assertIsInstance(v.ang, float)
+        self.assertIsInstance(v.get_magnitude(), float)
+        self.assertIsInstance(v.get_angle(), float)
 
     def test_equals(self):
         v0 = Vector(1, 1)
@@ -35,20 +35,20 @@ class VectorTest(unittest.TestCase):
     def test_magnitude(self):
         v = Vector(3.0, 4.0)
 
-        self.assertEqual(v.mag, 5.0)
+        self.assertEqual(v.get_magnitude(), 5.0)
 
     def test_angle(self):
         v = Vector(3.0, 4.0)
 
-        self.assertEqual(v.ang, np.degrees(np.arctan(4.0/3.0)))
+        self.assertEqual(v.get_angle(), np.degrees(np.arctan(4.0/3.0)))
 
     def test_zero(self):
         v = Vector(0.0, 0.0)
 
         self.assertEqual(v.x, 0.0)
         self.assertEqual(v.y, 0.0)
-        self.assertEqual(v.mag, 0.0)
-        self.assertEqual(v.ang, None)
+        self.assertEqual(v.get_magnitude(), 0.0)
+        self.assertEqual(v.get_angle(), None)
 
     def test_angle_straight(self):
         # Test each straight
@@ -57,10 +57,10 @@ class VectorTest(unittest.TestCase):
         v3 = Vector(-1, 0)
         v4 = Vector(0, -1)
 
-        self.assertEqual(v1.ang, 0)
-        self.assertEqual(v2.ang, 90)
-        self.assertEqual(v3.ang, 180)
-        self.assertEqual(v4.ang, 270)
+        self.assertEqual(v1.get_angle(), 0)
+        self.assertEqual(v2.get_angle(), 90)
+        self.assertEqual(v3.get_angle(), 180)
+        self.assertEqual(v4.get_angle(), 270)
 
     def test_angle_quadrants(self):
         # Test each quadrant
@@ -69,10 +69,10 @@ class VectorTest(unittest.TestCase):
         v3 = Vector(-1, -1)
         v4 = Vector(1, -1)
 
-        self.assertEqual(v1.ang, 45)
-        self.assertEqual(v2.ang, 135)
-        self.assertEqual(v3.ang, 225)
-        self.assertEqual(v4.ang, 315)
+        self.assertEqual(v1.get_angle(), 45)
+        self.assertEqual(v2.get_angle(), 135)
+        self.assertEqual(v3.get_angle(), 225)
+        self.assertEqual(v4.get_angle(), 315)
 
 
 if __name__ == '__main__':
