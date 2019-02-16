@@ -1,10 +1,11 @@
 import numpy as np
 
-from physics.collisions import *
+from physics.coordinates import Coordinates
+from physics.vector import Vector
 from pool.ball_type import BallType
 
 
-class PoolBall():
+class PoolBall:
     """
     Represents a single pool ball.
     """

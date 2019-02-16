@@ -29,13 +29,14 @@ def draw_pool_table(table: PoolTable):
     global SCREEN
     # rect(Surface, color, Rect, width=0) -> Rect
 
-    pygame.draw.rect(SCREEN, (0, 200, 0), pygame.Rect(0, 0, table.length, table.width), 1)
+    pygame.draw.rect(SCREEN, (0, 200, 0), pygame.Rect(0, 0, table.length, table.width), 0)
 
 
 def draw_pool_ball(ball: PoolBall):
     global SCREEN
 
     ball_color = ball.ball_type.color
+    print('draw_pool_ball, {} at {}, {}'.format(ball.ball_type.name, ball.pos.x, ball.pos.y))
     ball_pos = (int(ball.pos.x), int(ball.pos.y))
 
     # Draw a circle
@@ -49,7 +50,7 @@ def main():
     table = PoolTable(length=600)
 
     # DEBUG
-    table.balls[BallType.CUE].vel.x = 1.0
+    table.balls[BallType.CUE].vel.x = 15.0
 
     # Get just the list of balls to iterate easily
     balls = list(table.balls.values())
@@ -71,13 +72,13 @@ def main():
             # Check ball-wall collision
             ball_wall_collision = check_ball_wall_collision(balls[i], table.width, table.length, 0.0, 0.0)
             if ball_wall_collision is not None:
-                print("BALL-WALL COLLISION!")
+                print("BALL {}, WALL {}".format(balls[i], ball_wall_collision))
 
                 resolve_ball_wall_collision(balls[i], ball_wall_collision)
 
             for j in range(i + 1, len(balls)):
                 if check_ball_ball_collision(balls[i], balls[j]):
-                    print("BALL-BALL COLLISION!")
+                    print("BALL {}, BALL {}".format(balls[i], balls[j]))
 
                     resolve_ball_ball_collision(balls[i], balls[j])
 
