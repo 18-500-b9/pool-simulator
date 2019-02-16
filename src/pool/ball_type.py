@@ -22,6 +22,9 @@ class BallType(Enum):
     FOURTEEN = ('14', colors.WHITE)
     FIFTEEN = ('15', colors.WHITE)
 
-    def __init__(self, name, color):
-        self.name = name
+    def __init__(self, val, color):
+        self.val = val
         self.color = color
+
+    def __str__(self):
+        return self.name

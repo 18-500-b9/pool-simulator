@@ -1,9 +1,12 @@
+from typing import Optional
+
 from physics.coordinates import Coordinates
+from physics.direction import Direction
 from physics.utility import get_distance
 from physics.vector import Vector
-from physics.direction import Direction
 
 
+# TODO: Just make these take in PoolBall, lol
 def check_ball_ball_collision(a_center: Coordinates, a_radius: float,
                               b_center: Coordinates, b_radius: float) -> bool:
     """
@@ -19,6 +22,7 @@ def check_ball_ball_collision(a_center: Coordinates, a_radius: float,
     return d <= (a_radius + b_radius)
 
 
+# TODO: Just make these take in PoolBall, lol
 def resolve_ball_ball_collision(a_pos: Coordinates, a_vel: Vector, a_mass: float,
                                 b_pos: Coordinates, b_vel: Vector, b_mass: float) -> (Vector, Vector):
     """
@@ -43,8 +47,9 @@ def resolve_ball_ball_collision(a_pos: Coordinates, a_vel: Vector, a_mass: float
     return a_vel_new, b_vel_new
 
 
+# TODO: Just make these take in PoolBall, lol
 def check_ball_wall_collision(ball_center: Coordinates, ball_radius: float,
-                              north: float, east: float, south: float, west: float) -> bool:
+                              north: float, east: float, south: float, west: float) -> Optional[Direction]:
     """
     Check if a ball has collided with a wall.
 
@@ -54,14 +59,22 @@ def check_ball_wall_collision(ball_center: Coordinates, ball_radius: float,
     :param east: east wall boundary
     :param south: south wall boundary
     :param west: west wall boundary
-    :return: whether this ball has collided with a wall
+    :return: the wall this ball has collided with OR None
     """
 
-    return (ball_center.y + ball_radius >= north or
-            ball_center.x + ball_radius >= east or
-            ball_center.y - ball_radius <= south or
-            ball_center.x - ball_radius <= west)
+    if ball_center.y + ball_radius >= north:
+        return Direction.NORTH
+    elif ball_center.x + ball_radius >= east:
+        return Direction.EAST
+    elif ball_center.y - ball_radius <= south:
+        return Direction.SOUTH
+    elif ball_center.x - ball_radius <= west:
+        return Direction.WEST
+    else:
+        return None
 
+
+# TODO: Just make these take in PoolBall, lol
 def resolve_ball_wall_collision(ball_vel: Vector, wall: Direction):
     """
     Returns the new velocity for this ball that has collided with a wall.
@@ -74,5 +87,5 @@ def resolve_ball_wall_collision(ball_vel: Vector, wall: Direction):
 
     if wall == Direction.NORTH or wall == Direction.SOUTH:
         return Vector(ball_vel.x, -ball_vel.y)  # Reverse y-direction
-    else: # EAST or WEST
+    else:  # EAST or WEST
         return Vector(-ball_vel.x, ball_vel.y)  # Reverse x-direction

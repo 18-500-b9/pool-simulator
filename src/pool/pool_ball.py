@@ -13,16 +13,17 @@ class PoolBall():
     # DIAMETER = 0.05715  # m
 
     def __init__(self,
-                 name: BallType,
+                 ball_type: BallType,
                  pos: Coordinates,
                  mass: float,
                  radius: float,
-                 vel=Vector(0, 0)):
-        self.name = name
+                 vel=None):
+        self.ball_type = ball_type
         self.pos = pos
         self.mass = mass
         self.radius = radius
-        self.vel = vel
+        if vel is None:
+            self.vel = Vector(0, 0)
 
     def apply_force(self, force: Vector):
         """
@@ -65,5 +66,8 @@ class PoolBall():
         self.pos.x += self.vel.x
         self.pos.y += self.vel.y
 
+        # if self.ball_type == BallType.CUE:
+        # print(self)
+
     def __str__(self):
-        return "PoolBall {} at ({},{})".format(self.name, self.pos.x, self.pos.y)
+        return "PoolBall {} at ({},{})".format(self.ball_type.name, self.pos.x, self.pos.y)

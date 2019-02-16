@@ -18,7 +18,7 @@ class PoolBallTest(unittest.TestCase):
 
         p = PoolBall(name, pos, mass, radius)
 
-        self.assertEqual(p.name, name)
+        self.assertEqual(p.type, name)
         self.assertEqual(p.pos, pos)
         self.assertEqual(p.mass, mass)
         self.assertEqual(p.radius, radius)
