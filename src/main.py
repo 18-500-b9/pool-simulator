@@ -49,7 +49,7 @@ def main():
     table = PoolTable(length=600)
 
     # DEBUG
-    table.balls[BallType.CUE].vel.x = 10.0
+    table.balls[BallType.CUE].vel.x = 1.0
 
     # Get just the list of balls to iterate easily
     balls = list(table.balls.values())
@@ -69,21 +69,17 @@ def main():
         # Check/resolve collisions
         for i in range(len(balls)):
             # Check ball-wall collision
-            ball_wall_collision = check_ball_wall_collision(balls[i].pos, balls[i].radius,
-                                         table.width, table.length, 0.0, 0.0)
+            ball_wall_collision = check_ball_wall_collision(balls[i], table.width, table.length, 0.0, 0.0)
             if ball_wall_collision is not None:
                 print("BALL-WALL COLLISION!")
 
-                balls[i].vel = resolve_ball_wall_collision(balls[i].vel, ball_wall_collision)
+                resolve_ball_wall_collision(balls[i], ball_wall_collision)
 
             for j in range(i + 1, len(balls)):
-                if check_ball_ball_collision(balls[i].pos, balls[i].radius,
-                                             balls[j].pos, balls[j].radius):
+                if check_ball_ball_collision(balls[i], balls[j]):
                     print("BALL-BALL COLLISION!")
 
-                    balls[i].vel, balls[j].vel = resolve_ball_ball_collision(
-                        balls[i].pos, balls[i].vel, balls[i].mass,
-                        balls[j].pos, balls[j].vel, balls[j].mass)
+                    resolve_ball_ball_collision(balls[i], balls[j])
 
         # Draw pool table
         draw_pool_table(table)
