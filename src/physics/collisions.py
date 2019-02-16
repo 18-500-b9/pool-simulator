@@ -1,5 +1,6 @@
 from typing import Optional
 
+from physics.coordinates import Coordinates
 from physics.direction import Direction
 from physics.utility import get_distance
 from physics.vector import Vector
@@ -14,7 +15,10 @@ def check_ball_ball_collision(a: PoolBall, b: PoolBall) -> bool:
     :param b: ball B
     :return: whether these two balls are in collision
     """
-    d = get_distance(a.pos, b.pos)
+    a_pos = Coordinates(a.pos.x + a.vel.x, a.pos.y + a.vel.y)
+    b_pos = Coordinates(b.pos.x + b.vel.x, b.pos.y + b.vel.y)
+
+    d = get_distance(a_pos, b_pos)
     is_colliding = d <= (a.radius + b.radius)
 
     from pool.ball_type import BallType
@@ -62,13 +66,14 @@ def check_ball_wall_collision(ball: PoolBall,
     :return: the wall this ball has collided with OR None
     """
 
-    if ball.pos.y + ball.radius >= north:
+    # Add velocity to avoid 'sticking' to walls
+    if ball.pos.y + ball.vel.y + ball.radius >= north:
         return Direction.NORTH
-    elif ball.pos.x + ball.radius >= east:
+    elif ball.pos.x + ball.vel.x + ball.radius >= east:
         return Direction.EAST
-    elif ball.pos.y - ball.radius <= south:
+    elif ball.pos.y + ball.vel.y - ball.radius <= south:
         return Direction.SOUTH
-    elif ball.pos.x - ball.radius <= west:
+    elif ball.pos.x + ball.vel.x - ball.radius <= west:
         return Direction.WEST
     else:
         return None
