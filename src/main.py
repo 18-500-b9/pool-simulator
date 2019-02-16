@@ -52,6 +52,7 @@ def draw_pool_ball(ball: PoolBall):
     global SCREEN
 
     ball_color = ball.ball_type.color
+    print('draw_pool_ball, {} at {}, {}'.format(ball.ball_type.name, ball.pos.x, ball.pos.y))
     ball_pos = (int(ball.pos.x), int(ball.pos.y))
 
     # Draw a circle
