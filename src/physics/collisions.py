@@ -21,17 +21,6 @@ def check_ball_ball_collision(a: PoolBall, b: PoolBall) -> bool:
     d = get_distance(a_pos, b_pos)
     is_colliding = d <= (a.radius + b.radius)
 
-    from pool.ball_type import BallType
-    if a.ball_type is BallType.THREE:
-        print(a.most_recent_collision)
-        print(b.most_recent_collision)
-
-    if is_colliding and a.most_recent_collision is b and b.most_recent_collision is a:
-        print("NOT COLLIDING AGAIN...")
-        return False
-
-    a.most_recent_collision = b
-    b.most_recent_collision = a
     return is_colliding
 
 

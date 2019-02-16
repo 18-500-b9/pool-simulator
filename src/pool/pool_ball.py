@@ -1,10 +1,11 @@
 import numpy as np
 
-from physics.collisions import *
+from physics.coordinates import Coordinates
+from physics.vector import Vector
 from pool.ball_type import BallType
 
 
-class PoolBall():
+class PoolBall:
     """
     Represents a single pool ball.
     """
@@ -66,8 +67,6 @@ class PoolBall():
         self.pos.x += self.vel.x
         self.pos.y += self.vel.y
 
-        # if self.ball_type == BallType.CUE:
-        # print(self)
 
     def __str__(self):
         return "PoolBall {} at ({},{})".format(self.ball_type.name, self.pos.x, self.pos.y)
