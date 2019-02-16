@@ -67,6 +67,10 @@ class PoolBall:
         self.pos.x += self.vel.x
         self.pos.y += self.vel.y
 
+        # TODO Velocity slowdown
+        self.vel.x *= 0.99
+        self.vel.y *= 0.99
+
 
     def __str__(self):
         return "PoolBall {} at ({},{})".format(self.ball_type.name, self.pos.x, self.pos.y)

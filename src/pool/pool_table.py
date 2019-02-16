@@ -19,21 +19,23 @@ class PoolTable:
         self.balls = PoolTable.get_balls(GameType.NINE_BALL)
         self.rack_balls(GameType.NINE_BALL)
 
+        self.cue_angle = 0.0
+
     @staticmethod
     def get_balls(game: GameType):
         m = 10
         r = 10
 
-        ball_c = PoolBall(BallType.CUE, Coordinates(25, 25), m, r)
-        ball_1 = PoolBall(BallType.ONE, Coordinates(25, 25), m, r)
-        ball_2 = PoolBall(BallType.TWO, Coordinates(25, 25), m, r)
-        ball_3 = PoolBall(BallType.THREE, Coordinates(25, 25), m, r)
-        ball_4 = PoolBall(BallType.FOUR, Coordinates(25, 25), m, r)
-        ball_5 = PoolBall(BallType.FIVE, Coordinates(25, 25), m, r)
-        ball_6 = PoolBall(BallType.SIX, Coordinates(25, 25), m, r)
-        ball_7 = PoolBall(BallType.SEVEN, Coordinates(25, 25), m, r)
-        ball_8 = PoolBall(BallType.EIGHT, Coordinates(25, 25), m, r)
-        ball_9 = PoolBall(BallType.NINE, Coordinates(25, 25), m, r)
+        ball_c = PoolBall(BallType.CUE, Coordinates(0, 0), m, r)
+        ball_1 = PoolBall(BallType.ONE, Coordinates(0, 0), m, r)
+        ball_2 = PoolBall(BallType.TWO, Coordinates(0, 0), m, r)
+        ball_3 = PoolBall(BallType.THREE, Coordinates(0, 0), m, r)
+        ball_4 = PoolBall(BallType.FOUR, Coordinates(0, 0), m, r)
+        ball_5 = PoolBall(BallType.FIVE, Coordinates(0, 0), m, r)
+        ball_6 = PoolBall(BallType.SIX, Coordinates(0, 0), m, r)
+        ball_7 = PoolBall(BallType.SEVEN, Coordinates(0, 0), m, r)
+        ball_8 = PoolBall(BallType.EIGHT, Coordinates(0, 0), m, r)
+        ball_9 = PoolBall(BallType.NINE, Coordinates(0, 0), m, r)
 
         balls = {
             BallType.CUE: ball_c,

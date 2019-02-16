@@ -30,9 +30,10 @@ def get_angle(a: Coordinates, b=Coordinates(0, 0)) -> float:
     y = a.y - b.y
     x = a.x - b.x
 
-    # On the x or y axis
+    # print('get_angle, relative point is ({}, {})'.format(x, y))
+
     if x == y == 0:
-        return None
+        return None  # FIXME: Best return value for 'no angle'?
     elif x == 0:
         if y > 0:
             return 90.0
