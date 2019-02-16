@@ -1,5 +1,3 @@
-import numpy as np
-
 from physics.coordinates import Coordinates
 from physics.vector import Vector
 from pool.ball_type import BallType
@@ -38,26 +36,6 @@ class PoolBall:
         self.vel.x += acc_x
         self.vel.y += acc_y
 
-    @staticmethod
-    def get_theta(ball_a, ball_b):
-        """
-        Calculate the angle, relative to the x-axis, between 2 balls.
-        """
-
-        # Set ball_a to be the origin, find ball_b's relative position
-        x = ball_b.x - ball_a.x
-        y = ball_b.y - ball_a.y
-
-        return np.arctan(y / x)
-
-    @staticmethod
-    def distance(a: Coordinates, b: Coordinates):
-        """
-        Return the distance between these two points.
-        """
-
-        return np.sqrt((b.x - a.x) ** 2 + (b.y - a.y) ** 2)
-
     def time_step(self):
         """
         Update position after 1 second.
@@ -70,7 +48,6 @@ class PoolBall:
         # TODO Velocity slowdown
         self.vel.x *= 0.99
         self.vel.y *= 0.99
-
 
     def __str__(self):
         return "PoolBall {} at ({},{})".format(self.ball_type.name, self.pos.x, self.pos.y)
