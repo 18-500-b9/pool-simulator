@@ -41,6 +41,13 @@ class PoolBall:
         Update position after 1 second.
         """
 
+        # TODO Hard-coded deadstop
+        if abs(self.vel.x) < 0.1:
+            self.vel.x = 0
+        if abs(self.vel.y) < 0.1:
+            self.vel.y = 0
+
+
         # Distance = Velocity * Time
         self.pos.x += self.vel.x
         self.pos.y += self.vel.y
