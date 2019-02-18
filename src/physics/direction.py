@@ -10,6 +10,10 @@ class Direction(Enum):
     EAST = 'EAST'
     SOUTH = 'SOUTH'
     WEST = 'WEST'
+    NORTHWEST = 'NORTHWEST'
+    NORTHEAST = 'NORTHEAST'
+    SOUTHEAST= 'SOUTHEAST'
+    SOUTHWEST = 'SOUTHWEST'
 
     def __str__(self):
         return self.value
@@ -21,5 +25,15 @@ class Direction(Enum):
             return self.WEST
         elif self == self.SOUTH:
             return self.NORTH
-        else:  # WEST
+        elif self ==  self.WEST:
             return self.EAST
+        elif self == self.NORTHWEST:
+            return self.SOUTHEAST
+        elif self == self.NORTHEAST:
+            return self.SOUTHWEST
+        elif self == self.SOUTHEAST:
+            return self.NORTHWEST
+        elif self == self.SOUTHWEST:
+            return self.NORTHEAST
+        else:
+            return None

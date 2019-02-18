@@ -1,8 +1,7 @@
 import sys
 
-import pygame
-
 import numpy as np
+import pygame
 
 from physics.collisions import *
 from physics.utility import get_angle
@@ -10,12 +9,24 @@ from pool.ball_type import BallType
 from pool.pool_ball import PoolBall
 from pool.pool_table import PoolTable
 
-SCREEN_DIMENSIONS = WIDTH, HEIGHT = 800, 300
+SCREEN_DIMENSIONS = WIDTH, HEIGHT = 1200, 1200
+TABLE_LENGTH = 1000
+TABLE_OFFSET_X, TABLE_OFFSET_Y = 10, 10
 SCREEN = None
 
-# Global state of all balls (TODO: Wrap into class?)
-BALLS = []
+"""
+Helper functions.
+"""
+def to_pygame(xy: Coordinates, height: float) -> (float, float):
+    """
+    Convert Coordinates into PyGame coordinates tuple (lower-left => top-left).
+    """
 
+    return int(xy.x) + TABLE_OFFSET_X, int(height - xy.y) + TABLE_OFFSET_Y
+
+"""
+PyGame functions.
+"""
 
 def init():
     global SCREEN
@@ -30,7 +41,15 @@ def clear_screen():
 
 def draw_pool_table(table: PoolTable):
     global SCREEN
-    pygame.draw.rect(SCREEN, (0, 200, 0), pygame.Rect(0, 0, table.length, table.width), 0)
+
+    # Draw table cloth
+    pygame.draw.rect(SCREEN, (0, 200, 0), pygame.Rect(TABLE_OFFSET_X, TABLE_OFFSET_Y, table.length, table.width), 0)
+
+    # Draw table pockets
+    for pocket_dir in table.hole_centers:
+        pocket_pos = table.hole_centers[pocket_dir]
+
+        pygame.draw.circle(SCREEN, (0, 0, 0), to_pygame(pocket_pos, table.width), int(table.pocket_width))
 
 
 def draw_pool_cue(table: PoolTable):
@@ -41,7 +60,7 @@ def draw_pool_cue(table: PoolTable):
 
     cue_ball_pos = table.balls[BallType.CUE].pos
 
-    cue_stick_length = np.sqrt(WIDTH**2 + HEIGHT**2)
+    cue_stick_length = np.sqrt(table.width**2 + table.length**2)
     cue_stick_x = cue_ball_pos.x + cue_stick_length * np.cos(np.radians(table.cue_angle))
     cue_stick_y = cue_ball_pos.y - cue_stick_length * np.sin(np.radians(table.cue_angle))
 
@@ -52,7 +71,7 @@ def draw_pool_ball(ball: PoolBall):
     global SCREEN
 
     ball_color = ball.ball_type.color
-    print('draw_pool_ball, {} at {}, {}'.format(ball.ball_type.name, ball.pos.x, ball.pos.y))
+    # print('draw_pool_ball, {} at {}, {}'.format(ball.ball_type.name, ball.pos.x, ball.pos.y))
     ball_pos = (int(ball.pos.x), int(ball.pos.y))
 
     # Draw a circle
@@ -63,15 +82,16 @@ def main():
     init()
 
     # Create pool table
-    table = PoolTable(length=600)
+    table = PoolTable(length=TABLE_LENGTH)
 
     # DEBUG
-    table.balls[BallType.CUE].vel.x = 15.0
+    # table.balls[BallType.CUE].vel.x = 15.0
 
-    # Get just the list of balls to iterate easily
-    balls = list(table.balls.values())
 
     while 1:
+        # Get just the list of balls to iterate easily
+        balls = list(table.balls.values())
+
         clear_screen()
 
         # Check Pygame events
@@ -90,9 +110,13 @@ def main():
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
                     # Strike cue ball
-                    mag = 100.0
+                    mag = 50.0
                     force = Vector(mag*np.cos(np.radians(table.cue_angle)), -mag*np.sin(np.radians(table.cue_angle)))
                     table.balls[BallType.CUE].apply_force(force)
+                elif event.key == pygame.K_p:
+                    # DEBUG set all speeds to 0
+                    for ball in balls:
+                        ball.vel.x, ball.vel.y = 0, 0
 
         # Update ball positions
         for ball in balls:
@@ -101,7 +125,7 @@ def main():
         # Check/resolve collisions
         for i in range(len(balls)):
             # Check ball-wall collision
-            ball_wall_collision = check_ball_wall_collision(balls[i], table.width, table.length, 0.0, 0.0)
+            ball_wall_collision = check_ball_wall_collision(balls[i], (TABLE_OFFSET_X, TABLE_OFFSET_Y), (TABLE_OFFSET_X+table.length, TABLE_OFFSET_Y+table.width))
             if ball_wall_collision is not None:
                 # print("BALL {}, WALL {}".format(balls[i], ball_wall_collision))
 
@@ -112,6 +136,9 @@ def main():
                     # print("BALL {}, BALL {}".format(balls[i], balls[j]))
 
                     resolve_ball_ball_collision(balls[i], balls[j])
+
+        # Finally, check pocketed balls
+        table.pocket_balls()
 
         # Draw pool table
         draw_pool_table(table)

@@ -1,6 +1,10 @@
+from typing import Dict, List
+
 import numpy as np
 
 from physics.coordinates import Coordinates
+from physics.direction import Direction
+from physics.utility import get_distance
 from pool.ball_type import BallType
 from pool.game_type import GameType
 from pool.pool_ball import PoolBall
@@ -21,10 +25,22 @@ class PoolTable:
 
         self.cue_angle = 0.0
 
+        # For drawing rail and pockets
+        self.rail_width = 0
+
+        self.hole_centers = PoolTable.get_pockets(self.length, self.width)
+        self.hole_radius = 3.25 * self.balls[BallType.CUE].radius
+
+        self.corner_pocket_width = 0
+        self.side_pocket_width = 0
+
+        self.corner_pocket_angle = 0
+        self.side_pocket_angle = 0
+
     @staticmethod
     def get_balls(game: GameType):
         m = 10
-        r = 10
+        r = 15
 
         ball_c = PoolBall(BallType.CUE, Coordinates(0, 0), m, r)
         ball_1 = PoolBall(BallType.ONE, Coordinates(0, 0), m, r)
@@ -51,6 +67,22 @@ class PoolTable:
         }
 
         return balls
+
+    @staticmethod
+    def get_pockets(length: float, width: float) -> List[Coordinates]:
+        """
+        Get 6 coordinates for the center of the pockets.
+        Assuming upper left corner is origin (PyGame).
+        """
+
+        return [
+            Coordinates(0, 0),
+            Coordinates(0, width),
+            Coordinates(length / 2, width),
+            Coordinates(length, width),
+            Coordinates(length, 0),
+            Coordinates(length / 2, 0),
+        ]
 
     def rack_balls(self, game: GameType):
         """
@@ -107,3 +139,26 @@ class PoolTable:
 
             balls[BallType.EIGHT].pos.x = balls[BallType.SEVEN].pos.x + np.sqrt(3) * r
             balls[BallType.EIGHT].pos.y = balls[BallType.SEVEN].pos.y + r
+
+    def pocket_balls(self):
+        """
+        Call this method to check if any balls should be pocketed and remove them from play.
+
+        :return:
+        """
+
+        pocketed_ball_names = []
+
+        for ball_name in self.balls:
+            ball = self.balls[ball_name]
+            for pocket_pos in self.hole_centers:
+                d = get_distance(ball.pos, pocket_pos)
+                pocketed = d < self.pocket_width
+                if pocketed:
+                    print("Ball {} is pocketed into {}".format(ball_name, pocket))
+                    pocketed_ball_names.append(ball_name)
+
+        # Remove these balls from play
+        for ball_name in pocketed_ball_names:
+            if ball_name is not BallType.CUE:  # Don't pocket cue ball
+                del self.balls[ball_name]
