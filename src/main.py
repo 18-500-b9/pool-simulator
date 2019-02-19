@@ -9,8 +9,8 @@ from pool.ball_type import BallType
 from pool.pool_ball import PoolBall
 from pool.pool_table import PoolTable
 
-SCREEN_DIMENSIONS = WIDTH, HEIGHT = 1200, 1200
-TABLE_LENGTH = 1000
+SCREEN_DIMENSIONS = WIDTH, HEIGHT = 800, 800
+TABLE_LENGTH = 500
 TABLE_OFFSET_X, TABLE_OFFSET_Y = 10, 10
 SCREEN = None
 
@@ -46,10 +46,8 @@ def draw_pool_table(table: PoolTable):
     pygame.draw.rect(SCREEN, (0, 200, 0), pygame.Rect(TABLE_OFFSET_X, TABLE_OFFSET_Y, table.length, table.width), 0)
 
     # Draw table pockets
-    for pocket_dir in table.hole_centers:
-        pocket_pos = table.hole_centers[pocket_dir]
-
-        pygame.draw.circle(SCREEN, (0, 0, 0), to_pygame(pocket_pos, table.width), int(table.pocket_width))
+    for hole_center in table.hole_centers:
+        pygame.draw.circle(SCREEN, (0, 0, 0), to_pygame(hole_center, table.width), int(table.hole_radius))
 
 
 def draw_pool_cue(table: PoolTable):
@@ -60,7 +58,10 @@ def draw_pool_cue(table: PoolTable):
 
     cue_ball_pos = table.balls[BallType.CUE].pos
 
-    cue_stick_length = np.sqrt(table.width**2 + table.length**2)
+    if table.cue_line_end is None:
+        cue_stick_length = np.sqrt(table.length**2 + table.width**2)
+    else:
+        cue_stick_length = get_distance(cue_ball_pos, table.cue_line_end)
     cue_stick_x = cue_ball_pos.x + cue_stick_length * np.cos(np.radians(table.cue_angle))
     cue_stick_y = cue_ball_pos.y - cue_stick_length * np.sin(np.radians(table.cue_angle))
 
@@ -82,7 +83,8 @@ def main():
     init()
 
     # Create pool table
-    table = PoolTable(length=TABLE_LENGTH)
+    table = PoolTable(TABLE_OFFSET_X, TABLE_OFFSET_Y,
+                      TABLE_OFFSET_X+TABLE_LENGTH, TABLE_OFFSET_Y+TABLE_LENGTH/2)
 
     # DEBUG
     # table.balls[BallType.CUE].vel.x = 15.0
@@ -118,27 +120,8 @@ def main():
                     for ball in balls:
                         ball.vel.x, ball.vel.y = 0, 0
 
-        # Update ball positions
-        for ball in balls:
-            ball.time_step()
-
-        # Check/resolve collisions
-        for i in range(len(balls)):
-            # Check ball-wall collision
-            ball_wall_collision = check_ball_wall_collision(balls[i], (TABLE_OFFSET_X, TABLE_OFFSET_Y), (TABLE_OFFSET_X+table.length, TABLE_OFFSET_Y+table.width))
-            if ball_wall_collision is not None:
-                # print("BALL {}, WALL {}".format(balls[i], ball_wall_collision))
-
-                resolve_ball_wall_collision(balls[i], ball_wall_collision)
-
-            for j in range(i + 1, len(balls)):
-                if check_ball_ball_collision(balls[i], balls[j]):
-                    # print("BALL {}, BALL {}".format(balls[i], balls[j]))
-
-                    resolve_ball_ball_collision(balls[i], balls[j])
-
-        # Finally, check pocketed balls
-        table.pocket_balls()
+        # Table time step
+        table.time_step()
 
         # Draw pool table
         draw_pool_table(table)

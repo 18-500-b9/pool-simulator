@@ -53,10 +53,10 @@ def check_ball_wall_collision(ball: PoolBall, nw: (float, float), se: (float, fl
     :return: the wall this ball has collided with OR None
     """
 
-    north = nw[1]
-    east = se[0]
-    south = se[1]
-    west = nw[0]
+    north = nw[0]
+    east = se[1]
+    south = se[0]
+    west = nw[1]
 
     # Add velocity to avoid 'sticking' to walls
     if ball.pos.y + ball.vel.y - ball.radius <= north:

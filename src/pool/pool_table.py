@@ -1,10 +1,11 @@
-from typing import Dict, List
+from typing import List
 
 import numpy as np
 
+from physics.collisions import check_ball_ball_collision, resolve_ball_ball_collision, resolve_ball_wall_collision, \
+    check_ball_wall_collision
 from physics.coordinates import Coordinates
-from physics.direction import Direction
-from physics.utility import get_distance
+from physics.utility import get_distance, check_ray_circle_intersection
 from pool.ball_type import BallType
 from pool.game_type import GameType
 from pool.pool_ball import PoolBall
@@ -16,14 +17,20 @@ RACK_START_DIAMOND = 6
 
 
 class PoolTable:
-    def __init__(self, length: float):
-        self.length = float(length)
-        self.width = float(length) / 2  # Pool tables have 2:1 ratio
+    def __init__(self, left, top, right, bottom):
+        self.left = left
+        self.top = top
+        self.right = right
+        self.bottom = bottom
+
+        self.length = right - left
+        self.width = abs(top - bottom)
 
         self.balls = PoolTable.get_balls(GameType.NINE_BALL)
         self.rack_balls(GameType.NINE_BALL)
 
         self.cue_angle = 0.0
+        self.cue_line_end = None
 
         # For drawing rail and pockets
         self.rail_width = 0
@@ -31,11 +38,11 @@ class PoolTable:
         self.hole_centers = PoolTable.get_pockets(self.length, self.width)
         self.hole_radius = 3.25 * self.balls[BallType.CUE].radius
 
-        self.corner_pocket_width = 0
-        self.side_pocket_width = 0
+        self.corner_pocket_width = 5
+        self.side_pocket_width = 5
 
-        self.corner_pocket_angle = 0
-        self.side_pocket_angle = 0
+        self.corner_pocket_angle = 5
+        self.side_pocket_angle = 5
 
     @staticmethod
     def get_balls(game: GameType):
@@ -153,12 +160,81 @@ class PoolTable:
             ball = self.balls[ball_name]
             for pocket_pos in self.hole_centers:
                 d = get_distance(ball.pos, pocket_pos)
-                pocketed = d < self.pocket_width
+                pocketed = d < self.hole_radius
                 if pocketed:
-                    print("Ball {} is pocketed into {}".format(ball_name, pocket))
+                    print("Ball {} is pocketed into {}".format(ball_name, pocket_pos))
                     pocketed_ball_names.append(ball_name)
 
         # Remove these balls from play
         for ball_name in pocketed_ball_names:
             if ball_name is not BallType.CUE:  # Don't pocket cue ball
                 del self.balls[ball_name]
+            else:
+                # Restart cue ball position
+                self.balls[ball_name].pos.x = (CUE_START_DIAMOND / LONG_DIAMONDS) * self.length
+                self.balls[ball_name].pos.y = self.width / 2 + 20
+                self.balls[ball_name].vel.x = self.balls[ball_name].vel.y = 0
+
+    def time_step(self):
+        balls = list(self.balls.values())
+
+        # Update ball positions
+        for ball in balls:
+            ball.time_step()
+
+        # Check/resolve collisions
+        for i in range(len(balls)):
+            # Check ball-wall collision
+            ball_wall_collision = check_ball_wall_collision(balls[i], (self.top, self.left), (self.bottom, self.right))
+            if ball_wall_collision is not None:
+                # print("BALL {}, WALL {}".format(balls[i], ball_wall_collision))
+
+                resolve_ball_wall_collision(balls[i], ball_wall_collision)
+
+            for j in range(i + 1, len(balls)):
+                if check_ball_ball_collision(balls[i], balls[j]):
+                    # print("BALL {}, BALL {}".format(balls[i], balls[j]))
+
+                    resolve_ball_ball_collision(balls[i], balls[j])
+
+        # Check pocketed balls
+        self.pocket_balls()
+
+        # Get cue ball path
+        self.cue_ball_path()
+
+
+    def cue_ball_path(self) -> (Coordinates, Coordinates):
+        """
+        Get the endpoints for the line from the cue ball to the nearest target.
+
+        :return:
+        """
+
+        cue_ball_pos = None
+        for ball_type, ball in self.balls.items():
+            if ball_type is BallType.CUE:
+                cue_ball_pos = ball.pos
+                break
+
+        assert(cue_ball_pos is not None)
+
+        # See if there's a ball in the way
+        for ball_type, ball in self.balls.items():
+            if ball.ball_type is BallType.CUE: continue
+
+            p1 = cue_ball_pos
+            p2 = Coordinates(cue_ball_pos.x + self.length*np.cos(np.radians(self.cue_angle)),
+                             cue_ball_pos.y - self.length*np.sin(np.radians(self.cue_angle)))
+
+            if check_ray_circle_intersection(cue_ball_pos, p2, ball.pos, ball.radius):
+                # print("CUE BALL LINE INTERSECTING {}".format(ball))
+                self.cue_line_end = ball.pos
+                return
+            else:
+
+
+        self.cue_line_end = None
+
+    def target_ball_path(self):
+        return
