@@ -17,6 +17,8 @@ SCREEN = None
 """
 Helper functions.
 """
+
+
 def to_pygame(xy: Coordinates, height: float) -> (float, float):
     """
     Convert Coordinates into PyGame coordinates tuple (lower-left => top-left).
@@ -24,9 +26,11 @@ def to_pygame(xy: Coordinates, height: float) -> (float, float):
 
     return int(xy.x) + TABLE_OFFSET_X, int(height - xy.y) + TABLE_OFFSET_Y
 
+
 """
 PyGame functions.
 """
+
 
 def init():
     global SCREEN
@@ -59,7 +63,7 @@ def draw_pool_cue(table: PoolTable):
     cue_ball_pos = table.balls[BallType.CUE].pos
 
     if table.cue_line_end is None:
-        cue_stick_length = np.sqrt(table.length**2 + table.width**2)
+        cue_stick_length = np.sqrt(table.length ** 2 + table.width ** 2)
     else:
         cue_stick_length = get_distance(cue_ball_pos, table.cue_line_end)
     cue_stick_x = cue_ball_pos.x + cue_stick_length * np.cos(np.radians(table.cue_angle))
@@ -84,11 +88,10 @@ def main():
 
     # Create pool table
     table = PoolTable(TABLE_OFFSET_X, TABLE_OFFSET_Y,
-                      TABLE_OFFSET_X+TABLE_LENGTH, TABLE_OFFSET_Y+TABLE_LENGTH/2)
+                      TABLE_OFFSET_X + TABLE_LENGTH, TABLE_OFFSET_Y + TABLE_LENGTH / 2)
 
     # DEBUG
     # table.balls[BallType.CUE].vel.x = 15.0
-
 
     while 1:
         # Get just the list of balls to iterate easily
@@ -101,24 +104,38 @@ def main():
             if event.type == pygame.QUIT:
                 sys.exit()
             elif event.type == pygame.MOUSEBUTTONUP:
-                target_pos = Coordinates(pygame.mouse.get_pos()[0], HEIGHT-pygame.mouse.get_pos()[1])
+                target_pos = Coordinates(pygame.mouse.get_pos()[0], HEIGHT - pygame.mouse.get_pos()[1])
                 # print('target_pos:', target_pos)
                 # FIXME: Hacky way to resolve pygame origin vs my origin
-                cue_pos = Coordinates(table.balls[BallType.CUE].pos.x, HEIGHT-table.balls[BallType.CUE].pos.y)
+                cue_pos = Coordinates(table.balls[BallType.CUE].pos.x, HEIGHT - table.balls[BallType.CUE].pos.y)
                 # print('cue_pos:', cue_pos)
 
                 table.cue_angle = get_angle(target_pos, cue_pos)
                 # print('AFTER SETTING cue_angle', table.cue_angle)
             elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_SPACE:
+                if event.key == pygame.K_q:
+                    sys.exit()
+                elif event.key == pygame.K_b:
+                    # BREAK cue ball
+                    # Strike cue ball
+                    mag = 500.0
+                    force = Vector(mag * np.cos(np.radians(table.cue_angle)),
+                                   -mag * np.sin(np.radians(table.cue_angle)))
+                    table.balls[BallType.CUE].apply_force(force)
+                elif event.key == pygame.K_SPACE:
                     # Strike cue ball
                     mag = 50.0
-                    force = Vector(mag*np.cos(np.radians(table.cue_angle)), -mag*np.sin(np.radians(table.cue_angle)))
+                    force = Vector(mag * np.cos(np.radians(table.cue_angle)),
+                                   -mag * np.sin(np.radians(table.cue_angle)))
                     table.balls[BallType.CUE].apply_force(force)
                 elif event.key == pygame.K_p:
                     # DEBUG set all speeds to 0
                     for ball in balls:
                         ball.vel.x, ball.vel.y = 0, 0
+                elif event.key == pygame.K_r:
+                    # DEBUG reset
+                    table = PoolTable(TABLE_OFFSET_X, TABLE_OFFSET_Y,
+                                      TABLE_OFFSET_X + TABLE_LENGTH, TABLE_OFFSET_Y + TABLE_LENGTH / 2)
 
         # Table time step
         table.time_step()

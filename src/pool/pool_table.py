@@ -36,7 +36,7 @@ class PoolTable:
         self.rail_width = 0
 
         self.hole_centers = PoolTable.get_pockets(self.length, self.width)
-        self.hole_radius = 3.25 * self.balls[BallType.CUE].radius
+        self.hole_radius = 2.25 * self.balls[BallType.CUE].radius
 
         self.corner_pocket_width = 5
         self.side_pocket_width = 5
