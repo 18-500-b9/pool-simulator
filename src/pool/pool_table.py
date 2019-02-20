@@ -35,7 +35,7 @@ class PoolTable:
         # For drawing rail and pockets
         self.rail_width = 0
 
-        self.hole_centers = PoolTable.get_pockets(self.length, self.width)
+        self.hole_centers = self.get_pockets()
         self.hole_radius = 2.25 * self.balls[BallType.CUE].radius
 
         self.corner_pocket_width = 5
@@ -47,7 +47,7 @@ class PoolTable:
     @staticmethod
     def get_balls(game: GameType):
         m = 10
-        r = 15
+        r = 10
 
         ball_c = PoolBall(BallType.CUE, Coordinates(0, 0), m, r)
         ball_1 = PoolBall(BallType.ONE, Coordinates(0, 0), m, r)
@@ -75,20 +75,19 @@ class PoolTable:
 
         return balls
 
-    @staticmethod
-    def get_pockets(length: float, width: float) -> List[Coordinates]:
+    def get_pockets(self) -> List[Coordinates]:
         """
         Get 6 coordinates for the center of the pockets.
         Assuming upper left corner is origin (PyGame).
         """
 
         return [
-            Coordinates(0, 0),
-            Coordinates(0, width),
-            Coordinates(length / 2, width),
-            Coordinates(length, width),
-            Coordinates(length, 0),
-            Coordinates(length / 2, 0),
+            Coordinates(self.left, self.top),
+            Coordinates(self.left + self.length / 2, self.top),
+            Coordinates(self.left + self.length, self.top),
+            Coordinates(self.right, self.bottom),
+            Coordinates(self.right - self.length / 2, self.bottom),
+            Coordinates(self.right - self.length, self.bottom),
         ]
 
     def rack_balls(self, game: GameType):
@@ -202,7 +201,6 @@ class PoolTable:
 
         # Get cue ball path
         self.cue_ball_path()
-
 
     def cue_ball_path(self) -> (Coordinates, Coordinates):
         """

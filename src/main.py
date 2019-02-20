@@ -51,7 +51,7 @@ def draw_pool_table(table: PoolTable):
 
     # Draw table pockets
     for hole_center in table.hole_centers:
-        pygame.draw.circle(SCREEN, (0, 0, 0), to_pygame(hole_center, table.width), int(table.hole_radius))
+        pygame.draw.circle(SCREEN, (0, 0, 0), (int(hole_center.x), int(hole_center.y)), int(table.hole_radius))
 
 
 def draw_pool_cue(table: PoolTable):
@@ -117,7 +117,6 @@ def main():
                     sys.exit()
                 elif event.key == pygame.K_b:
                     # BREAK cue ball
-                    # Strike cue ball
                     mag = 500.0
                     force = Vector(mag * np.cos(np.radians(table.cue_angle)),
                                    -mag * np.sin(np.radians(table.cue_angle)))
