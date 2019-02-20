@@ -5,7 +5,7 @@ import numpy as np
 from physics.collisions import check_ball_ball_collision, resolve_ball_ball_collision, resolve_ball_wall_collision, \
     check_ball_wall_collision
 from physics.coordinates import Coordinates
-from physics.utility import get_distance, check_ray_circle_intersection
+from physics.utility import get_distance, check_ray_circle_intersection, check_ray_line_intersection
 from pool.ball_type import BallType
 from pool.game_type import GameType
 from pool.pool_ball import PoolBall
@@ -217,24 +217,34 @@ class PoolTable:
                 cue_ball_pos = ball.pos
                 break
 
-        assert(cue_ball_pos is not None)
+        assert (cue_ball_pos is not None)
+
+        p1 = cue_ball_pos
+        p2 = Coordinates(cue_ball_pos.x + self.length * np.cos(np.radians(self.cue_angle)),
+                         cue_ball_pos.y - self.length * np.sin(np.radians(self.cue_angle)))
 
         # See if there's a ball in the way
         for ball_type, ball in self.balls.items():
             if ball.ball_type is BallType.CUE: continue
 
-            p1 = cue_ball_pos
-            p2 = Coordinates(cue_ball_pos.x + self.length*np.cos(np.radians(self.cue_angle)),
-                             cue_ball_pos.y - self.length*np.sin(np.radians(self.cue_angle)))
-
             if check_ray_circle_intersection(cue_ball_pos, p2, ball.pos, ball.radius):
                 # print("CUE BALL LINE INTERSECTING {}".format(ball))
                 self.cue_line_end = ball.pos
                 return
-            else:
 
+        # Get the nearest intersecting cushion
+        nw = Coordinates(self.left, self.top)
+        ne = Coordinates(self.right, self.top)
+        se = Coordinates(self.right, self.bottom)
+        sw = Coordinates(self.left, self.bottom)
+        cushion_intersections = [check_ray_line_intersection(p1, p2, nw, ne),
+                                 check_ray_line_intersection(p1, p2, ne, se),
+                                 check_ray_line_intersection(p1, p2, se, sw),
+                                 check_ray_line_intersection(p1, p2, sw, nw)]
 
-        self.cue_line_end = None
+        for point in cushion_intersections:
+            if point is not None:
+                self.cue_line_end = point
 
     def target_ball_path(self):
         return

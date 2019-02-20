@@ -1,6 +1,7 @@
 """
 Utility class to hold various functions.
 """
+from typing import Optional
 
 import numpy as np
 
@@ -94,3 +95,51 @@ def check_ray_circle_intersection(p1: Coordinates, p2: Coordinates, c_mid: Coord
         t2 = (-b + discriminant) / (2 * a)
 
         return (0 <= t1 <= 1) or (0 <= t2 <= 1)
+
+
+def check_ray_line_intersection(p1: Coordinates, p2: Coordinates,
+                                p3: Coordinates, p4: Coordinates) -> Optional[Coordinates]:
+    """
+    Check whether a ray intersections a line.
+
+    Source: https://stackoverflow.com/a/19550879
+
+    :param p1: point A of line segment A
+    :param p2: point B of line segment A
+    :param p3: point A of line segment B
+    :param p4: point B of line segment B
+
+    :return: the point of intersection; None otherwise
+    """
+
+    s10_x = p2.x - p1.x
+    s10_y = p2.y - p1.y
+    s32_x = p4.x - p3.x
+    s32_y = p4.y - p3.y
+
+    denom = s10_x * s32_y - s32_x * s10_y
+
+    if denom == 0: return None  # collinear
+
+    denom_is_positive = denom > 0
+
+    s02_x = p1.x - p3.x
+    s02_y = p1.y - p3.y
+
+    s_numer = s10_x * s02_y - s10_y * s02_x
+
+    if (s_numer < 0) == denom_is_positive:
+        return None  # no collision
+
+    t_numer = s32_x * s02_y - s32_y * s02_x
+
+    if (t_numer < 0) == denom_is_positive:
+        return None  # no collision
+
+    if (s_numer > denom) == denom_is_positive or (t_numer > denom) == denom_is_positive:
+        return None  # no collision
+
+    # collision detected
+    t = t_numer / denom
+    intersection_point = Coordinates(p1.x + (t * s10_x), p1.y + (t * s10_y))
+    return intersection_point

@@ -29,6 +29,13 @@ class Vector:
         else:  # Direction.WEST
             return Vector(-1, 0)
 
+    def unit(self):
+        """
+        Get this vector's unit vector.
+        TODO TEST THIS
+        """
+        return Vector(self.x / self.get_magnitude(), self.y / self.get_magnitude())
+
     def get_magnitude(self):
         """
         Get the magnitude for this vector.
