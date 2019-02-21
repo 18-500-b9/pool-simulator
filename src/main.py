@@ -2,6 +2,7 @@ import sys
 
 import numpy as np
 import pygame
+import pygame.gfxdraw
 
 from physics.collisions import *
 from physics.utility import get_angle
@@ -80,7 +81,9 @@ def draw_pool_ball(ball: PoolBall):
     ball_pos = (int(ball.pos.x), int(ball.pos.y))
 
     # Draw a circle
-    pygame.draw.circle(SCREEN, ball_color, ball_pos, ball.radius)
+    # pygame.draw.circle(SCREEN, ball_color, ball_pos, ball.radius)
+    pygame.gfxdraw.aacircle(SCREEN, int(ball.pos.x), int(ball.pos.y), ball.radius, ball_color)
+    pygame.gfxdraw.filled_circle(SCREEN, int(ball.pos.x), int(ball.pos.y), ball.radius, ball_color)
 
 
 def main():
