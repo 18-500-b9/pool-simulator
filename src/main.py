@@ -10,9 +10,9 @@ from pool.ball_type import BallType
 from pool.pool_ball import PoolBall
 from pool.pool_table import PoolTable
 
-SCREEN_DIMENSIONS = WIDTH, HEIGHT = 800, 800
-TABLE_LENGTH = 500
-TABLE_OFFSET_X, TABLE_OFFSET_Y = 10, 10
+SCREEN_DIMENSIONS = WIDTH, HEIGHT = 1000, 1000
+TABLE_LENGTH = 400
+TABLE_OFFSET_X, TABLE_OFFSET_Y = 100, 100
 SCREEN = None
 
 """
@@ -20,12 +20,20 @@ Helper functions.
 """
 
 
-def to_pygame(xy: Coordinates, height: float) -> (float, float):
+def coords_to_pygame(xy: Coordinates, height: float) -> Coordinates:
     """
     Convert Coordinates into PyGame coordinates tuple (lower-left => top-left).
     """
 
-    return int(xy.x) + TABLE_OFFSET_X, int(height - xy.y) + TABLE_OFFSET_Y
+    return Coordinates(int(xy.x), int(height - xy.y))
+
+
+def coords_from_pygame(xy: (float, float), height: float) -> Coordinates:
+    """
+    Convert PyGame coordinates tuple to Coordinates (top-left => lower-left).
+    """
+
+    return Coordinates(xy[0], height - xy[1])
 
 
 """
@@ -47,54 +55,75 @@ def clear_screen():
 def draw_pool_table(table: PoolTable):
     global SCREEN
 
+    table_color = (0, 200, 0)
+
+    nw = coords_to_pygame(Coordinates(table.left, table.top), HEIGHT)
+    se = coords_to_pygame(Coordinates(table.right, table.bottom), HEIGHT)
+
+    # left, top, width, height = TABLE_OFFSET_X, TABLE_OFFSET_Y, table.length, table.width
+    left, top, width, height = nw.x, nw.y, table.length, table.width
+
+
     # Draw table cloth
-    pygame.draw.rect(SCREEN, (0, 200, 0), pygame.Rect(TABLE_OFFSET_X, TABLE_OFFSET_Y, table.length, table.width), 0)
+    pygame.draw.rect(SCREEN, table_color, pygame.Rect(left, top, width, height), 0)
 
     # Draw table pockets
     for hole_center in table.hole_centers:
-        pygame.draw.circle(SCREEN, (0, 0, 0), (int(hole_center.x), int(hole_center.y)), int(table.hole_radius))
+        pocket_color = (0, 0, 0)
+        p = coords_to_pygame(hole_center, HEIGHT)
+        x, y, r = int(p.x), int(p.y), int(table.hole_radius)
+        pygame.draw.circle(SCREEN, pocket_color, (x, y), r)
 
 
-def draw_pool_cue(table: PoolTable):
+def draw_cue_stick_line(table: PoolTable):
     global SCREEN
+    # TODO
 
-    if table.cue_angle == 0.0:
-        return
+    p1 = coords_to_pygame(table.cue_ball.pos, HEIGHT)
+    p2 = coords_to_pygame(table.cue_line_end, HEIGHT)
 
-    cue_ball_pos = table.balls[BallType.CUE].pos
+    x1, y1 = int(p1.x), int(p1.y)
+    x2, y2 = int(p2.x), int(p2.y)
+    color = (255, 255, 255)
 
-    if table.cue_line_end is None:
-        cue_stick_length = np.sqrt(table.length ** 2 + table.width ** 2)
-    else:
-        cue_stick_length = get_distance(cue_ball_pos, table.cue_line_end)
-    cue_stick_x = cue_ball_pos.x + cue_stick_length * np.cos(np.radians(table.cue_angle))
-    cue_stick_y = cue_ball_pos.y - cue_stick_length * np.sin(np.radians(table.cue_angle))
+    pygame.gfxdraw.line(SCREEN, x1, y1, x2, y2, color)
 
-    pygame.draw.line(SCREEN, (139, 69, 19), (cue_ball_pos.x, cue_ball_pos.y), (cue_stick_x, cue_stick_y), 3)
+
+def draw_cue_ghost_ball(table: PoolTable):
+    global SCREEN
+    # TODO
+
+
+def draw_cue_ball_deflection_line(table: PoolTable):
+    global SCREEN
+    # TODO
+
+
+def draw_object_ball_deflection_line(table: PoolTable):
+    global SCREEN
+    # TODO
 
 
 def draw_pool_ball(ball: PoolBall):
     global SCREEN
 
-    ball_color = ball.ball_type.color
-    # print('draw_pool_ball, {} at {}, {}'.format(ball.ball_type.name, ball.pos.x, ball.pos.y))
-    ball_pos = (int(ball.pos.x), int(ball.pos.y))
+    p = coords_to_pygame(ball.pos, HEIGHT)
+
+    x, y, r = int(p.x), int(p.y), int(ball.radius)
+    color = ball.ball_type.color
 
     # Draw a circle
-    # pygame.draw.circle(SCREEN, ball_color, ball_pos, ball.radius)
-    pygame.gfxdraw.aacircle(SCREEN, int(ball.pos.x), int(ball.pos.y), ball.radius, ball_color)
-    pygame.gfxdraw.filled_circle(SCREEN, int(ball.pos.x), int(ball.pos.y), ball.radius, ball_color)
+    pygame.gfxdraw.aacircle(SCREEN, x, y, r, color)
+    pygame.gfxdraw.filled_circle(SCREEN, x, y, r, color)
 
 
 def main():
     init()
 
     # Create pool table
-    table = PoolTable(TABLE_OFFSET_X, TABLE_OFFSET_Y,
-                      TABLE_OFFSET_X + TABLE_LENGTH, TABLE_OFFSET_Y + TABLE_LENGTH / 2)
-
-    # DEBUG
-    # table.balls[BallType.CUE].vel.x = 15.0
+    nw = coords_from_pygame((TABLE_OFFSET_X, TABLE_OFFSET_Y), HEIGHT)
+    se = coords_from_pygame((TABLE_OFFSET_X + TABLE_LENGTH, TABLE_OFFSET_Y + TABLE_LENGTH / 2), HEIGHT)
+    table = PoolTable(nw, se)
 
     while 1:
         # Get just the list of balls to iterate easily
@@ -107,14 +136,12 @@ def main():
             if event.type == pygame.QUIT:
                 sys.exit()
             elif event.type == pygame.MOUSEBUTTONUP:
-                target_pos = Coordinates(pygame.mouse.get_pos()[0], HEIGHT - pygame.mouse.get_pos()[1])
-                # print('target_pos:', target_pos)
-                # FIXME: Hacky way to resolve pygame origin vs my origin
-                cue_pos = Coordinates(table.balls[BallType.CUE].pos.x, HEIGHT - table.balls[BallType.CUE].pos.y)
-                # print('cue_pos:', cue_pos)
+                # These positions assume origin lower-left
+                target_pos = coords_from_pygame(pygame.mouse.get_pos(), HEIGHT)
+                cue_pos = table.cue_ball.pos
 
                 table.cue_angle = get_angle(target_pos, cue_pos)
-                # print('AFTER SETTING cue_angle', table.cue_angle)
+                print('AFTER SETTING cue_angle', table.cue_angle)
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_q:
                     sys.exit()
@@ -126,7 +153,7 @@ def main():
                     table.balls[BallType.CUE].apply_force(force)
                 elif event.key == pygame.K_SPACE:
                     # Strike cue ball
-                    mag = 50.0
+                    mag = 100.0
                     force = Vector(mag * np.cos(np.radians(table.cue_angle)),
                                    -mag * np.sin(np.radians(table.cue_angle)))
                     table.balls[BallType.CUE].apply_force(force)
@@ -136,8 +163,10 @@ def main():
                         ball.vel.x, ball.vel.y = 0, 0
                 elif event.key == pygame.K_r:
                     # DEBUG reset
-                    table = PoolTable(TABLE_OFFSET_X, TABLE_OFFSET_Y,
-                                      TABLE_OFFSET_X + TABLE_LENGTH, TABLE_OFFSET_Y + TABLE_LENGTH / 2)
+                    # Create pool table
+                    nw = coords_from_pygame((TABLE_OFFSET_X, TABLE_OFFSET_Y), HEIGHT)
+                    se = coords_from_pygame((TABLE_OFFSET_X + TABLE_LENGTH, TABLE_OFFSET_Y + TABLE_LENGTH / 2), HEIGHT)
+                    table = PoolTable(nw, se)
 
         # Table time step
         table.time_step()
@@ -145,8 +174,10 @@ def main():
         # Draw pool table
         draw_pool_table(table)
 
-        # Draw pool cue line
-        draw_pool_cue(table)
+        draw_cue_stick_line(table)
+        draw_cue_ghost_ball(table)
+        draw_cue_ball_deflection_line(table)
+        draw_object_ball_deflection_line(table)
 
         # Draw all pool balls
         for ball in balls:

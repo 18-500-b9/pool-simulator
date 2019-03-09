@@ -97,6 +97,63 @@ def check_ray_circle_intersection(p1: Coordinates, p2: Coordinates, c_mid: Coord
         return (0 <= t1 <= 1) or (0 <= t2 <= 1)
 
 
+def get_ray_circle_intersection(p1: Coordinates, p2: Coordinates, c_mid: Coordinates, c_radius: float):
+    # print('-------')
+    # print('get_ray_circle_intersection')
+    # print('p1:{}, p2:{}'.format(p1, p2))
+    # print('c_mid:{}, c_radius:{}'.format(c_mid, c_radius))
+    # print('-------')
+    if (p2.x - p1.x) == 0:
+        print('p2.x = ', p2.x)
+        print('p1.x = ', p1.x)
+        exit(-1)
+    # Line equation: y = mx + b
+    m = (p2.y - p1.y) / (p2.x - p1.x)
+    b = p1.y - m * p1.x
+
+    # Circle equation: (x-p)^2 + (y-q)^2 = r^2
+    p, q, r = c_mid.x, c_mid.y, c_radius
+
+    # First, substituting line equation into circle equation
+    # These are the coefficients of the quadratic equation created
+    A = (m ** 2 + 1)
+    B = 2 * (m * b - m * q - p)
+    C = (q ** 2 - r ** 2 + p ** 2 - 2 * b * q + b ** 2)
+
+    discrim = B ** 2 - 4 * A * C
+
+    if discrim < 0:
+        # print('line misses circle')
+        # Line misses circle
+        return None
+    elif discrim == 0:
+        # print('line is tangent to circle')
+        # Line tangent to circle
+        x1 = (-B + np.sqrt(discrim)) / 2 * A
+        y1 = m * x1 + b
+        x2 = (-B - np.sqrt(discrim)) / 2 * A
+        y2 = m * x2 + b
+
+        assert (x1 == x2 and y1 == y2)
+        return Coordinates(x1, y1)
+
+    else:  # discrim > 0
+        # print('line intersects circle')
+        # Line meets circle at 2 points
+        x1 = (-B + np.sqrt(discrim)) / 2 * A
+        result1 = Coordinates(x1, m * x1 + b)
+        x2 = (-B - np.sqrt(discrim)) / 2 * A
+        result2 = Coordinates(x2, m * x2 + b)
+
+        mag1 = get_distance(p1, result1)
+        mag2 = get_distance(p1, result2)
+
+        if mag1 < mag2:
+            return result1
+        else:
+            return result2
+
+
 def check_ray_line_intersection(p1: Coordinates, p2: Coordinates,
                                 p3: Coordinates, p4: Coordinates) -> Optional[Coordinates]:
     """
@@ -143,3 +200,86 @@ def check_ray_line_intersection(p1: Coordinates, p2: Coordinates,
     t = t_numer / denom
     intersection_point = Coordinates(p1.x + (t * s10_x), p1.y + (t * s10_y))
     return intersection_point
+
+
+def get_line_endpoint_within_box(p1: Coordinates, angle: float, nw: Coordinates, se: Coordinates) -> Coordinates:
+    """
+    For the given box (given by NW and SE coordinates), find the endpoint for a given point and angle.
+    :param p1: start point of the line
+    :param angle: angle of line, north of x-axis, in degrees
+    :param nw: upper-left border of the box
+    :param se: lower-right border of the box
+    :return: end point of the line
+    """
+
+    # Angle to degrees
+    angle_rad = np.radians(angle)
+
+    # North, East, South, West
+    n, e, s, w = nw.y, se.x, se.y, nw.x
+
+    # Quadrant angles of rectangle
+    top_start = np.degrees(np.arctan((n - p1.y) / (e - p1.x)))
+    left_start = np.degrees(np.arctan((n - p1.y) / (p1.x - w)))
+    bottom_start = np.degrees(np.arctan((p1.y - s) / (p1.x - w)))
+    right_start = np.degrees(np.arctan((p1.y - s) / (e - p1.x)))
+
+    # Calculate length of the line, limited by the containing box
+    if top_start < angle < 180 - left_start:
+        # Top quadrant
+        y = n - p1.y
+        x = y / np.tan(angle_rad)
+    elif 180 - left_start <= angle < 180 + bottom_start:
+        # Left quadrant
+        x = p1.x - w
+        y = x * np.tan(angle_rad)
+    elif 180 + bottom_start <= angle < 360 - right_start:
+        # Bottom quadrant
+        y = p1.y - s
+        x = y / np.tan(angle_rad)
+    else:
+        # Right quadrant
+        x = e - p1.x
+        y = x * np.tan(angle_rad)
+
+    line_length = np.sqrt(x ** 2 + y ** 2)
+
+    return Coordinates(p1.x + line_length * np.cos(angle_rad),
+                       p1.y + line_length * np.sin(angle_rad))
+
+
+def get_parallel_line(p1: Coordinates, p2: Coordinates, dist: float, top: bool) -> (Coordinates, Coordinates):
+    """
+    Get the line parallel to a given line for a certain distance away.
+
+    :param p1: point 1 of original line
+    :param p2: point 2 of original line
+    :param dist: distance between lines
+    :param top: top or bottom parallel line
+    :return: pair of points representing the new, parallel line
+    """
+
+    # Get perpendicular angle
+    normal_angle = get_angle(p2, p1) + 90
+
+    if top:
+        p3 = Coordinates(
+            p1.x + dist * np.cos(np.radians(normal_angle)),
+            p1.y - dist * np.sin(np.radians(normal_angle))
+        )
+        p4 = Coordinates(
+            p2.x + dist * np.cos(np.radians(normal_angle)),
+            p2.y - dist * np.sin(np.radians(normal_angle))
+        )
+
+    else:
+        p3 = Coordinates(
+            p1.x - dist * np.cos(np.radians(normal_angle)),
+            p1.y + dist * np.sin(np.radians(normal_angle))
+        )
+        p4 = Coordinates(
+            p2.x - dist * np.cos(np.radians(normal_angle)),
+            p2.y + dist * np.sin(np.radians(normal_angle))
+        )
+
+    return p3, p4
