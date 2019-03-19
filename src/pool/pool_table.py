@@ -5,7 +5,8 @@ import numpy as np
 from physics.collisions import check_ball_ball_collision, resolve_ball_ball_collision, resolve_ball_wall_collision, \
     check_ball_wall_collision
 from physics.coordinates import Coordinates
-from physics.utility import get_distance, get_line_endpoint_within_box
+from physics.utility import get_distance, get_line_endpoint_within_box, check_ray_circle_intersection, \
+    get_ray_circle_intersection, get_parallel_line, get_point_on_line_distance_from_point
 from pool.ball_type import BallType
 from pool.game_type import GameType
 from pool.pool_ball import PoolBall
@@ -39,8 +40,8 @@ class PoolTable:
         self.width = self.top - self.bottom
 
         # Pool table balls
-        self.balls = PoolTable.get_balls(GameType.ONE_BALL)
-        self.rack_balls(GameType.ONE_BALL)
+        self.balls = PoolTable.get_balls(GameType.NINE_BALL)
+        self.rack_balls(GameType.NINE_BALL)
         assert (BallType.CUE in self.balls)
         self.cue_ball = self.balls[BallType.CUE]
 
@@ -79,14 +80,14 @@ class PoolTable:
         balls = {
             BallType.CUE: ball_c,
             BallType.ONE: ball_1,
-            # BallType.TWO: ball_2,
-            # BallType.THREE: ball_3,
-            # BallType.FOUR: ball_4,
-            # BallType.FIVE: ball_5,
-            # BallType.SIX: ball_6,
-            # BallType.SEVEN: ball_7,
-            # BallType.EIGHT: ball_8,
-            # BallType.NINE: ball_9,
+            BallType.TWO: ball_2,
+            BallType.THREE: ball_3,
+            BallType.FOUR: ball_4,
+            BallType.FIVE: ball_5,
+            BallType.SIX: ball_6,
+            BallType.SEVEN: ball_7,
+            BallType.EIGHT: ball_8,
+            BallType.NINE: ball_9,
         }
 
         return balls
@@ -130,40 +131,43 @@ class PoolTable:
             balls[BallType.ONE].pos.x = self.left + (RACK_START_DIAMOND / LONG_DIAMONDS) * self.length
             balls[BallType.ONE].pos.y = self.bottom + self.width / 2
 
-            balls[BallType.TWO].pos.x = self.left + balls[BallType.ONE].pos.x + np.sqrt(3) * r
-            balls[BallType.TWO].pos.y = self.bottom + balls[BallType.ONE].pos.y + r
+            balls[BallType.TWO].pos.x = balls[BallType.ONE].pos.x + np.sqrt(3) * r
+            balls[BallType.TWO].pos.y = balls[BallType.ONE].pos.y + r
 
-            balls[BallType.THREE].pos.x = self.left + balls[BallType.ONE].pos.x + np.sqrt(3) * r
-            balls[BallType.THREE].pos.y = self.bottom + balls[BallType.ONE].pos.y - r
+            balls[BallType.THREE].pos.x = balls[BallType.ONE].pos.x + np.sqrt(3) * r
+            balls[BallType.THREE].pos.y = balls[BallType.ONE].pos.y - r
 
         elif game == GameType.NINE_BALL:
             # Coordinates of leading 1 ball
             balls[BallType.ONE].pos.x = self.left + (RACK_START_DIAMOND / LONG_DIAMONDS) * self.length
             balls[BallType.ONE].pos.y = self.bottom + self.width / 2
 
-            balls[BallType.TWO].pos.x = self.left + balls[BallType.ONE].pos.x + np.sqrt(3) * r
-            balls[BallType.TWO].pos.y = self.bottom + balls[BallType.ONE].pos.y + r
+            balls[BallType.TWO].pos.x = balls[BallType.ONE].pos.x + np.sqrt(3) * r
+            balls[BallType.TWO].pos.y = balls[BallType.ONE].pos.y + r
 
-            balls[BallType.THREE].pos.x = self.left + balls[BallType.ONE].pos.x + np.sqrt(3) * r
-            balls[BallType.THREE].pos.y = self.bottom + balls[BallType.ONE].pos.y - r
+            balls[BallType.THREE].pos.x = balls[BallType.ONE].pos.x + np.sqrt(3) * r
+            balls[BallType.THREE].pos.y = balls[BallType.ONE].pos.y - r
 
-            balls[BallType.FOUR].pos.x = self.left + balls[BallType.TWO].pos.x + np.sqrt(3) * r
-            balls[BallType.FOUR].pos.y = self.bottom + balls[BallType.TWO].pos.y + r
+            balls[BallType.FOUR].pos.x = balls[BallType.TWO].pos.x + np.sqrt(3) * r
+            balls[BallType.FOUR].pos.y = balls[BallType.TWO].pos.y + r
 
-            balls[BallType.NINE].pos.x = self.left + balls[BallType.TWO].pos.x + np.sqrt(3) * r
-            balls[BallType.NINE].pos.y = self.bottom + balls[BallType.TWO].pos.y - r
+            balls[BallType.NINE].pos.x = balls[BallType.TWO].pos.x + np.sqrt(3) * r
+            balls[BallType.NINE].pos.y = balls[BallType.TWO].pos.y - r
 
-            balls[BallType.FIVE].pos.x = self.left + balls[BallType.THREE].pos.x + np.sqrt(3) * r
-            balls[BallType.FIVE].pos.y = self.bottom + balls[BallType.THREE].pos.y - r
+            balls[BallType.FIVE].pos.x = balls[BallType.THREE].pos.x + np.sqrt(3) * r
+            balls[BallType.FIVE].pos.y = balls[BallType.THREE].pos.y - r
 
-            balls[BallType.SIX].pos.x = self.left + balls[BallType.NINE].pos.x + np.sqrt(3) * r
-            balls[BallType.SIX].pos.y = self.bottom + balls[BallType.NINE].pos.y + r
+            balls[BallType.SIX].pos.x = balls[BallType.NINE].pos.x + np.sqrt(3) * r
+            balls[BallType.SIX].pos.y = balls[BallType.NINE].pos.y + r
 
-            balls[BallType.SEVEN].pos.x = self.left + balls[BallType.NINE].pos.x + np.sqrt(3) * r
-            balls[BallType.SEVEN].pos.y = self.bottom + balls[BallType.NINE].pos.y - r
+            balls[BallType.SEVEN].pos.x = balls[BallType.NINE].pos.x + np.sqrt(3) * r
+            balls[BallType.SEVEN].pos.y = balls[BallType.NINE].pos.y - r
 
-            balls[BallType.EIGHT].pos.x = self.left + balls[BallType.SEVEN].pos.x + np.sqrt(3) * r
-            balls[BallType.EIGHT].pos.y = self.bottom + balls[BallType.SEVEN].pos.y + r
+            balls[BallType.EIGHT].pos.x = balls[BallType.SEVEN].pos.x + np.sqrt(3) * r
+            balls[BallType.EIGHT].pos.y = balls[BallType.SEVEN].pos.y + r
+
+            for ball in self.balls.values():
+                print('ball {} at {}'.format(ball.ball_type, ball.pos))
 
     def pocket_balls(self):
         """
@@ -199,20 +203,31 @@ class PoolTable:
         Will either be at a ball or a cushion.
         """
 
-        p1 = self.cue_ball.pos  # Line start is cue ball position
         angle = self.cue_angle
         nw = Coordinates(self.left, self.top)
         se = Coordinates(self.right, self.bottom)
 
-        # Set endpoint to cushion
-        self.cue_line_end = get_line_endpoint_within_box(p1, angle, nw, se)
+        cue_mid_start = self.cue_ball.pos  # Line start is cue ball position
+        cue_mid_end = self.cue_line_end = get_line_endpoint_within_box(cue_mid_start, angle, nw, se)
 
-        # First check if intersecting any ball
-        for ball_type, ball in self.balls.items():
-            if ball_type is BallType.CUE: continue # Skip the cue ball
+        cue_top_start, cue_top_end = get_parallel_line(cue_mid_start, cue_mid_end, self.cue_ball.radius, True)
+        cue_bot_start, cue_bot_end = get_parallel_line(cue_mid_start, cue_mid_end, self.cue_ball.radius, False)
 
+        # Ghost ball computation
+        balls_by_distance = list(self.balls.values())
+        balls_by_distance.sort(key=lambda b: get_distance(cue_mid_start, b.pos))
 
+        for ball in balls_by_distance:
+            if ball.ball_type is BallType.CUE: continue  # Skip the cue ball
 
+            if check_ray_circle_intersection(cue_top_start, cue_top_end, ball.pos, ball.radius):
+                print("TOP CUE LINE INTERSECTS")
+                self.cue_line_end = get_point_on_line_distance_from_point(cue_mid_start, cue_mid_end, ball.pos, 2*ball.radius)
+                return
+            elif check_ray_circle_intersection(cue_bot_start, cue_bot_end, ball.pos, ball.radius):
+                print("BOT CUE LINE INTERSECTS")
+                self.cue_line_end = get_point_on_line_distance_from_point(cue_mid_start, cue_mid_end, ball.pos, 2*ball.radius)
+                return
 
     def time_step(self):
         balls = list(self.balls.values())
@@ -224,8 +239,7 @@ class PoolTable:
         # Check/resolve collisions
         for i in range(len(balls)):
             # Check ball-wall collision
-            ball_wall_collision = check_ball_wall_collision(balls[i], Coordinates(self.left, self.top),
-                                                            Coordinates(self.right, self.bottom))
+            ball_wall_collision = check_ball_wall_collision(balls[i], self.top, self.left, self.bottom, self.right)
             if ball_wall_collision is not None:
                 # print("BALL {}, WALL {}".format(balls[i], ball_wall_collision))
 

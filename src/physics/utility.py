@@ -97,6 +97,10 @@ def check_ray_circle_intersection(p1: Coordinates, p2: Coordinates, c_mid: Coord
         return (0 <= t1 <= 1) or (0 <= t2 <= 1)
 
 
+def check_point_on_line_segment(x, y, p1, p2):
+    return p1.x <= x <= p2.x and p1.y <= y <= p2.y
+
+
 def get_ray_circle_intersection(p1: Coordinates, p2: Coordinates, c_mid: Coordinates, c_radius: float):
     # print('-------')
     # print('get_ray_circle_intersection')
@@ -123,11 +127,11 @@ def get_ray_circle_intersection(p1: Coordinates, p2: Coordinates, c_mid: Coordin
     discrim = B ** 2 - 4 * A * C
 
     if discrim < 0:
-        # print('line misses circle')
+        print('line misses circle')
         # Line misses circle
         return None
     elif discrim == 0:
-        # print('line is tangent to circle')
+        print('line is tangent to circle')
         # Line tangent to circle
         x1 = (-B + np.sqrt(discrim)) / 2 * A
         y1 = m * x1 + b
@@ -138,7 +142,7 @@ def get_ray_circle_intersection(p1: Coordinates, p2: Coordinates, c_mid: Coordin
         return Coordinates(x1, y1)
 
     else:  # discrim > 0
-        # print('line intersects circle')
+        print('line intersects circle')
         # Line meets circle at 2 points
         x1 = (-B + np.sqrt(discrim)) / 2 * A
         result1 = Coordinates(x1, m * x1 + b)
@@ -147,6 +151,9 @@ def get_ray_circle_intersection(p1: Coordinates, p2: Coordinates, c_mid: Coordin
 
         mag1 = get_distance(p1, result1)
         mag2 = get_distance(p1, result2)
+
+        if not check_point_on_line_segment(result1.x, result1.y, p1, p2):
+            return None
 
         if mag1 < mag2:
             return result1
@@ -283,3 +290,71 @@ def get_parallel_line(p1: Coordinates, p2: Coordinates, dist: float, top: bool) 
         )
 
     return p3, p4
+
+
+def get_point_on_line_distance_from_point(line_start, line_end, point, distance) -> Coordinates:
+    a_side = distance
+    c_side = get_distance(line_start, point)
+
+    """
+    angle_point = abs(np.arctan((point.y - line_start.y) / (point.x - line_start.x)))
+    angle_line = abs(np.arctan((line_end.y - line_start.y) / (line_end.x - line_start.x)))
+
+    bigger_angle = max(angle_point, angle_line)
+    smaller_angle = angle_point if bigger_angle is angle_line else angle_line
+
+    print('bigger_angle:', np.degrees(bigger_angle))
+    print('smaller_angle:', np.degrees(smaller_angle))
+    
+    a_angle = bigger_angle - smaller_angle
+    """
+
+    v_point = Vector(point.x - line_start.x, point.y - line_start.y)
+    v_line = Vector(line_end.x - line_start.x, line_end.y - line_start.y)
+    dot = v_point.dot_product(v_line)
+
+    a_angle = np.arccos(dot / v_point.get_magnitude() / v_line.get_magnitude())
+
+    # a_angle = np.arctan((line_end.y - line_start.y)/(line_end.x - line_start.x))
+    # a_angle = np.arctan2(np.array(line_end.y - line_start.y), np.array(line_end.x - line_start.x))
+
+    # print('line_start:', line_start)
+    # print('line_end:', line_end)
+    # print('distance:', distance)
+
+    print('a_side:', a_side)
+    print('c_side:', c_side)
+    print('a_angle:', np.degrees(a_angle))
+
+    from physics.trianglesolver import solve
+    (a_side, b_side, c_side, a_angle, b_angle, c_angle) = solve(a=a_side, c=c_side, A=a_angle, ssa_flag='obtuse')
+    assert a_angle + b_angle + c_angle == np.radians(180), 'a_angle: {} \nb_angle: {}\nc_angle: {}\n'.format(a_angle,
+                                                                                                             b_angle,
+                                                                                                             c_angle)
+
+    """
+    # Find Angle C with Law of Sines
+    c_angle = np.arcsin(c_side / a_side * np.sin(a_angle))
+
+    # Find Angle B
+    b_angle = np.radians(180) - a_angle - c_angle
+    assert a_angle + b_angle + c_angle == np.radians(180), 'a_angle: {} \nb_angle: {}\nc_angle: {}\n'.format(a_angle, b_angle, c_angle)
+
+    # Find Side B with Law of Sines
+    b_side = np.sin(b_angle) * a_side / np.sin(a_angle)
+    """
+
+    # Compute exact point
+    # angle = np.arctan((line_end.y - line_start.y) / (line_end.x - line_start.x))
+    angle = np.radians(get_angle(line_end, line_start))
+    x = line_start.x + b_side * np.cos(angle)
+    y = line_start.y + b_side * np.sin(angle)
+
+    print('a_side:', a_side)
+    print('b_side:', b_side)
+    print('c_side:', c_side)
+    print('a_angle:', np.degrees(a_angle))
+    print('b_angle:', np.degrees(b_angle))
+    print('c_angle:', np.degrees(c_angle))
+
+    return Coordinates(x, y)

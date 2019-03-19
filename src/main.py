@@ -25,6 +25,7 @@ def coords_to_pygame(xy: Coordinates, height: float) -> Coordinates:
     Convert Coordinates into PyGame coordinates tuple (lower-left => top-left).
     """
 
+
     return Coordinates(int(xy.x), int(height - xy.y))
 
 
@@ -79,6 +80,9 @@ def draw_cue_stick_line(table: PoolTable):
     global SCREEN
     # TODO
 
+    if table.cue_line_end is None:
+        return
+
     p1 = coords_to_pygame(table.cue_ball.pos, HEIGHT)
     p2 = coords_to_pygame(table.cue_line_end, HEIGHT)
 
@@ -87,6 +91,15 @@ def draw_cue_stick_line(table: PoolTable):
     color = (255, 255, 255)
 
     pygame.gfxdraw.line(SCREEN, x1, y1, x2, y2, color)
+
+    # DRAW GHOST BALL
+    p = coords_to_pygame(table.cue_line_end, HEIGHT)
+
+    x, y, r = int(p.x), int(p.y), int(table.cue_ball.radius)
+    color = table.cue_ball.ball_type.color
+
+    # Draw a circle
+    pygame.gfxdraw.aacircle(SCREEN, x, y, r, color)
 
 
 def draw_cue_ghost_ball(table: PoolTable):
@@ -149,13 +162,13 @@ def main():
                     # BREAK cue ball
                     mag = 500.0
                     force = Vector(mag * np.cos(np.radians(table.cue_angle)),
-                                   -mag * np.sin(np.radians(table.cue_angle)))
+                                   mag * np.sin(np.radians(table.cue_angle)))
                     table.balls[BallType.CUE].apply_force(force)
                 elif event.key == pygame.K_SPACE:
                     # Strike cue ball
                     mag = 100.0
                     force = Vector(mag * np.cos(np.radians(table.cue_angle)),
-                                   -mag * np.sin(np.radians(table.cue_angle)))
+                                   mag * np.sin(np.radians(table.cue_angle)))
                     table.balls[BallType.CUE].apply_force(force)
                 elif event.key == pygame.K_p:
                     # DEBUG set all speeds to 0

@@ -42,7 +42,7 @@ def resolve_ball_ball_collision(a: PoolBall, b: PoolBall):
     a.vel, b.vel = a_vel_new, b_vel_new
 
 
-def check_ball_wall_collision(ball: PoolBall, nw: Coordinates, se: Coordinates) -> Optional[Direction]:
+def check_ball_wall_collision(ball: PoolBall, top, left, bottom, right) -> Optional[Direction]:
     """
     Check if a ball has collided with a wall.
     Assuming PyGame origin of upper-left.
@@ -53,19 +53,16 @@ def check_ball_wall_collision(ball: PoolBall, nw: Coordinates, se: Coordinates) 
     :return: the wall this ball has collided with OR None
     """
 
-    north = nw.y
-    east = se.x
-    south = se.y
-    west = nw.x
+
 
     # Add velocity to avoid 'sticking' to walls
-    if ball.pos.y + ball.vel.y - ball.radius <= north:
+    if ball.pos.y + ball.vel.y + ball.radius >= top:
         return Direction.NORTH
-    elif ball.pos.x + ball.vel.x + ball.radius >= east:
+    elif ball.pos.x + ball.vel.x - ball.radius <= left:
         return Direction.EAST
-    elif ball.pos.y + ball.vel.y + ball.radius >= south:
+    elif ball.pos.y + ball.vel.y - ball.radius <= bottom:
         return Direction.SOUTH
-    elif ball.pos.x + ball.vel.x - ball.radius <= west:
+    elif ball.pos.x + ball.vel.x + ball.radius >= right:
         return Direction.WEST
     else:
         return None
