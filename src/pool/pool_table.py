@@ -6,7 +6,7 @@ from physics.collisions import check_ball_ball_collision, resolve_ball_ball_coll
     check_ball_wall_collision
 from physics.coordinates import Coordinates
 from physics.utility import get_distance, get_line_endpoint_within_box, check_ray_circle_intersection, \
-    get_ray_circle_intersection, get_parallel_line, get_point_on_line_distance_from_point
+    get_parallel_line, get_point_on_line_distance_from_point, get_angle
 from pool.ball_type import BallType
 from pool.game_type import GameType
 from pool.pool_ball import PoolBall
@@ -49,6 +49,13 @@ class PoolTable:
         self.cue_angle = 0.0
         self.cue_line_end = None
 
+        # Deflection lines
+        self.object_deflect_line_start = None
+        self.object_deflect_line_end = None
+
+        # Cue deflect line start = cue line end (ghost ball location)
+        self.cue_deflect_line_end = None
+
         # For drawing rail and pockets
         self.rail_width = 0
 
@@ -60,6 +67,11 @@ class PoolTable:
 
         self.corner_pocket_angle = 5
         self.side_pocket_angle = 5
+
+    def reset_cue_ball(self):
+        self.cue_angle = 0.0
+        self.cue_line_end = None
+        self.cue_deflect_line_end = None
 
     @staticmethod
     def get_balls(game: GameType):
@@ -120,7 +132,7 @@ class PoolTable:
 
         # Set cue ball position
         balls[BallType.CUE].pos.x = self.left + (CUE_START_DIAMOND / LONG_DIAMONDS) * self.length
-        balls[BallType.CUE].pos.y = self.bottom + self.width / 2 + 20
+        balls[BallType.CUE].pos.y = self.bottom + self.width / 2 + 10
 
         if game == GameType.ONE_BALL:
             # Coordinates of leading 1 ball
@@ -192,10 +204,15 @@ class PoolTable:
             if ball_name is not BallType.CUE:  # Don't pocket cue ball
                 del self.balls[ball_name]
             else:
+                self.reset_cue_ball()
+
                 # Restart cue ball position
-                self.balls[ball_name].pos.x = (CUE_START_DIAMOND / LONG_DIAMONDS) * self.length
-                self.balls[ball_name].pos.y = self.width / 2 + 20
+                self.balls[ball_name].pos.x = self.left + (CUE_START_DIAMOND / LONG_DIAMONDS) * self.length
+                self.balls[ball_name].pos.y = self.bottom + self.width / 2 + 20
                 self.balls[ball_name].vel.x = self.balls[ball_name].vel.y = 0
+
+                print("CUE BALL POCKETED...")
+                print("CUE BALL POS: {}".format(self.cue_ball.pos))
 
     def get_cue_ball_path(self):
         """
@@ -203,12 +220,19 @@ class PoolTable:
         Will either be at a ball or a cushion.
         """
 
+        # If cue ball is currently pocketed, skip
+        if self.cue_ball is None:
+            return
+
+        # Reset lines
+        self.object_deflect_line_start = self.object_deflect_line_end = self.cue_deflect_line_end = None
+
         angle = self.cue_angle
         nw = Coordinates(self.left, self.top)
         se = Coordinates(self.right, self.bottom)
 
         cue_mid_start = self.cue_ball.pos  # Line start is cue ball position
-        cue_mid_end = self.cue_line_end = get_line_endpoint_within_box(cue_mid_start, angle, nw, se)
+        cue_mid_end = self.cue_line_end = get_line_endpoint_within_box(cue_mid_start, angle, nw, se, self.cue_ball.radius)
 
         cue_top_start, cue_top_end = get_parallel_line(cue_mid_start, cue_mid_end, self.cue_ball.radius, True)
         cue_bot_start, cue_bot_end = get_parallel_line(cue_mid_start, cue_mid_end, self.cue_ball.radius, False)
@@ -220,13 +244,36 @@ class PoolTable:
         for ball in balls_by_distance:
             if ball.ball_type is BallType.CUE: continue  # Skip the cue ball
 
-            if check_ray_circle_intersection(cue_top_start, cue_top_end, ball.pos, ball.radius):
-                print("TOP CUE LINE INTERSECTS")
-                self.cue_line_end = get_point_on_line_distance_from_point(cue_mid_start, cue_mid_end, ball.pos, 2*ball.radius)
-                return
-            elif check_ray_circle_intersection(cue_bot_start, cue_bot_end, ball.pos, ball.radius):
-                print("BOT CUE LINE INTERSECTS")
-                self.cue_line_end = get_point_on_line_distance_from_point(cue_mid_start, cue_mid_end, ball.pos, 2*ball.radius)
+            if (check_ray_circle_intersection(cue_top_start, cue_top_end, ball.pos, ball.radius) or
+                    check_ray_circle_intersection(cue_bot_start, cue_bot_end, ball.pos, ball.radius)):
+
+                print("CUE BALL INTERSECTING {}".format(ball))
+
+                self.cue_line_end = get_point_on_line_distance_from_point(cue_mid_start, cue_mid_end, ball.pos,
+                                                                          2 * ball.radius)
+
+                # Set object ball deflection line
+                self.object_deflect_line_start = ball.pos
+                object_ball_angle = get_angle(ball.pos, self.cue_line_end)
+                self.object_deflect_line_end = get_line_endpoint_within_box(ball.pos, object_ball_angle, nw, se, self.cue_ball.radius)
+
+                # Set cue ball deflection line
+                cue_deflect_angle = get_angle(self.object_deflect_line_end, self.object_deflect_line_start)
+                cue_object_angle = get_angle(ball.pos, self.cue_ball.pos)
+                print('self.cue_angle: {}'.format(self.cue_angle))
+                print('self.cue_angle: {}'.format(cue_object_angle))
+                if self.cue_angle % 360 == 0:
+                    # Edge case when perfectly to the right
+                    cue_deflect_angle = (cue_deflect_angle + 90) % 360
+                elif self.cue_angle < cue_object_angle:
+
+                    print("CUE BALL GOING RIGHT OF OBJECT BALl")
+                    cue_deflect_angle = (cue_deflect_angle - 90) % 360
+                else:
+                    print("CUE BALL GOING LEFT OF OBJECT BALl")
+                    cue_deflect_angle = (cue_deflect_angle + 90) % 360
+                self.cue_deflect_line_end = get_line_endpoint_within_box(self.cue_line_end, cue_deflect_angle, nw, se,
+                                                                            self.cue_ball.radius)
                 return
 
     def time_step(self):

@@ -11,7 +11,7 @@ from pool.pool_ball import PoolBall
 from pool.pool_table import PoolTable
 
 SCREEN_DIMENSIONS = WIDTH, HEIGHT = 1000, 1000
-TABLE_LENGTH = 400
+TABLE_LENGTH = 800
 TABLE_OFFSET_X, TABLE_OFFSET_Y = 100, 100
 SCREEN = None
 
@@ -109,12 +109,49 @@ def draw_cue_ghost_ball(table: PoolTable):
 
 def draw_cue_ball_deflection_line(table: PoolTable):
     global SCREEN
-    # TODO
+
+    if table.cue_deflect_line_end is None:
+        return
+
+    p1 = coords_to_pygame(table.cue_line_end, HEIGHT)
+    p2 = coords_to_pygame(table.cue_deflect_line_end, HEIGHT)
+
+    x1, y1 = int(p1.x), int(p1.y)
+    x2, y2 = int(p2.x), int(p2.y)
+    color = (255, 255, 255)
+
+    pygame.gfxdraw.line(SCREEN, x1, y1, x2, y2, color)
+
+    # # DRAW GHOST BALL
+    p = coords_to_pygame(table.cue_deflect_line_end, HEIGHT)
+
+    x, y, r = int(p.x), int(p.y), int(table.cue_ball.radius)
+    color = table.cue_ball.ball_type.color
+    pygame.gfxdraw.aacircle(SCREEN, x, y, r, color)
 
 
 def draw_object_ball_deflection_line(table: PoolTable):
     global SCREEN
-    # TODO
+
+    if table.object_deflect_line_start is None or table.object_deflect_line_end is None:
+        return
+
+    p1 = coords_to_pygame(table.object_deflect_line_start, HEIGHT)
+    p2 = coords_to_pygame(table.object_deflect_line_end, HEIGHT)
+
+    x1, y1 = int(p1.x), int(p1.y)
+    x2, y2 = int(p2.x), int(p2.y)
+    color = (255, 255, 255)
+
+    pygame.gfxdraw.line(SCREEN, x1, y1, x2, y2, color)
+
+    # # DRAW GHOST BALL
+    p = coords_to_pygame(table.object_deflect_line_end, HEIGHT)
+
+    x, y, r = int(p.x), int(p.y), int(table.cue_ball.radius)
+    color = table.cue_ball.ball_type.color
+    pygame.gfxdraw.aacircle(SCREEN, x, y, r, color)
+
 
 
 def draw_pool_ball(ball: PoolBall):
@@ -166,7 +203,7 @@ def main():
                     table.balls[BallType.CUE].apply_force(force)
                 elif event.key == pygame.K_SPACE:
                     # Strike cue ball
-                    mag = 100.0
+                    mag = 25.0
                     force = Vector(mag * np.cos(np.radians(table.cue_angle)),
                                    mag * np.sin(np.radians(table.cue_angle)))
                     table.balls[BallType.CUE].apply_force(force)

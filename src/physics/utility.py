@@ -209,13 +209,17 @@ def check_ray_line_intersection(p1: Coordinates, p2: Coordinates,
     return intersection_point
 
 
-def get_line_endpoint_within_box(p1: Coordinates, angle: float, nw: Coordinates, se: Coordinates) -> Coordinates:
+def get_line_endpoint_within_box(p1: Coordinates, angle: float, nw: Coordinates, se: Coordinates,
+                                 offset: float) -> Coordinates:
     """
-    For the given box (given by NW and SE coordinates), find the endpoint for a given point and angle.
+    For the given box (given by NW and SE coordinates), find the endpoint for a given point and angle,
+    'radius' distance away.
+
     :param p1: start point of the line
     :param angle: angle of line, north of x-axis, in degrees
     :param nw: upper-left border of the box
     :param se: lower-right border of the box
+    :param radius: radius of ball
     :return: end point of the line
     """
 
@@ -226,27 +230,27 @@ def get_line_endpoint_within_box(p1: Coordinates, angle: float, nw: Coordinates,
     n, e, s, w = nw.y, se.x, se.y, nw.x
 
     # Quadrant angles of rectangle
-    top_start = np.degrees(np.arctan((n - p1.y) / (e - p1.x)))
-    left_start = np.degrees(np.arctan((n - p1.y) / (p1.x - w)))
-    bottom_start = np.degrees(np.arctan((p1.y - s) / (p1.x - w)))
-    right_start = np.degrees(np.arctan((p1.y - s) / (e - p1.x)))
+    top_start = np.degrees(np.arctan((n - p1.y) / (e - p1.x))) if (e - p1.x) > 0 else np.radians(90)
+    left_start = np.degrees(np.arctan((n - p1.y) / (p1.x - w))) if (p1.x - w) > 0 else np.radians(90)
+    bottom_start = np.degrees(np.arctan((p1.y - s) / (p1.x - w))) if (p1.x - w) > 0 else np.radians(90)
+    right_start = np.degrees(np.arctan((p1.y - s) / (e - p1.x))) if (e - p1.x) > 0 else np.radians(90)
 
     # Calculate length of the line, limited by the containing box
     if top_start < angle < 180 - left_start:
         # Top quadrant
-        y = n - p1.y
+        y = n - p1.y - offset
         x = y / np.tan(angle_rad)
     elif 180 - left_start <= angle < 180 + bottom_start:
         # Left quadrant
-        x = p1.x - w
+        x = p1.x - w - offset
         y = x * np.tan(angle_rad)
     elif 180 + bottom_start <= angle < 360 - right_start:
         # Bottom quadrant
-        y = p1.y - s
+        y = p1.y - s - offset
         x = y / np.tan(angle_rad)
     else:
         # Right quadrant
-        x = e - p1.x
+        x = e - p1.x - offset
         y = x * np.tan(angle_rad)
 
     line_length = np.sqrt(x ** 2 + y ** 2)
@@ -296,65 +300,20 @@ def get_point_on_line_distance_from_point(line_start, line_end, point, distance)
     a_side = distance
     c_side = get_distance(line_start, point)
 
-    """
-    angle_point = abs(np.arctan((point.y - line_start.y) / (point.x - line_start.x)))
-    angle_line = abs(np.arctan((line_end.y - line_start.y) / (line_end.x - line_start.x)))
-
-    bigger_angle = max(angle_point, angle_line)
-    smaller_angle = angle_point if bigger_angle is angle_line else angle_line
-
-    print('bigger_angle:', np.degrees(bigger_angle))
-    print('smaller_angle:', np.degrees(smaller_angle))
-    
-    a_angle = bigger_angle - smaller_angle
-    """
-
     v_point = Vector(point.x - line_start.x, point.y - line_start.y)
     v_line = Vector(line_end.x - line_start.x, line_end.y - line_start.y)
     dot = v_point.dot_product(v_line)
 
     a_angle = np.arccos(dot / v_point.get_magnitude() / v_line.get_magnitude())
 
-    # a_angle = np.arctan((line_end.y - line_start.y)/(line_end.x - line_start.x))
-    # a_angle = np.arctan2(np.array(line_end.y - line_start.y), np.array(line_end.x - line_start.x))
-
-    # print('line_start:', line_start)
-    # print('line_end:', line_end)
-    # print('distance:', distance)
-
-    print('a_side:', a_side)
-    print('c_side:', c_side)
-    print('a_angle:', np.degrees(a_angle))
-
     from physics.trianglesolver import solve
     (a_side, b_side, c_side, a_angle, b_angle, c_angle) = solve(a=a_side, c=c_side, A=a_angle, ssa_flag='obtuse')
     assert a_angle + b_angle + c_angle == np.radians(180), 'a_angle: {} \nb_angle: {}\nc_angle: {}\n'.format(a_angle,
                                                                                                              b_angle,
                                                                                                              c_angle)
-
-    """
-    # Find Angle C with Law of Sines
-    c_angle = np.arcsin(c_side / a_side * np.sin(a_angle))
-
-    # Find Angle B
-    b_angle = np.radians(180) - a_angle - c_angle
-    assert a_angle + b_angle + c_angle == np.radians(180), 'a_angle: {} \nb_angle: {}\nc_angle: {}\n'.format(a_angle, b_angle, c_angle)
-
-    # Find Side B with Law of Sines
-    b_side = np.sin(b_angle) * a_side / np.sin(a_angle)
-    """
-
     # Compute exact point
-    # angle = np.arctan((line_end.y - line_start.y) / (line_end.x - line_start.x))
     angle = np.radians(get_angle(line_end, line_start))
     x = line_start.x + b_side * np.cos(angle)
     y = line_start.y + b_side * np.sin(angle)
-
-    print('a_side:', a_side)
-    print('b_side:', b_side)
-    print('c_side:', c_side)
-    print('a_angle:', np.degrees(a_angle))
-    print('b_angle:', np.degrees(b_angle))
-    print('c_angle:', np.degrees(c_angle))
 
     return Coordinates(x, y)
